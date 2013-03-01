@@ -4,9 +4,11 @@
 """
 
 import sys
+from multiprocessing import Process
 import string
 import heapq
 import itertools
+from copy import copy
 from random import randint
 from random import shuffle
 from collections import deque
@@ -16,11 +18,14 @@ from collections import deque
 
 directions = ['N','S','W','E']
 maxnodes = 50000
-
 maxdepth = 12
+maxtraindep = 20
 
 N = 15
 board_size = 4
+
+loops = list(itertools.product(range(board_size), range(board_size)))
+
 #------------------------------------------------
 # Class definitions
 
@@ -58,6 +63,14 @@ class State:
 
     def clear(self,r,c):
         self.coding &= ~(N<<((r*4+c)*4))
+
+    # return the coding with all tiles not in the pattern masked
+    def mask(self, pattern):
+        masked = self.coding
+        for r,c in loops:
+            if self.at(r,c) not in pattern:
+                masked &= ~(N<<((r*4+c)*4))
+        return masked
         
     def __init__(self, coding, blank, parent=None, action=None, cost=0, fcost=0):
         self.coding = coding
@@ -282,13 +295,99 @@ def h_manhattan(state1, state2):
     pos1 = [0] * 16
     pos2 = [0] * 16        
         
-    for r,c in itertools.product(range(4), range(4)):
+    for r,c in loops:
         pos1[state1.at(r,c)] = (r,c)
         pos2[state2.at(r,c)] = (r,c)
 
+    pos1[0] = pos2[0] = (0,0)
     dist = sum([abs(x[0]-y[0])+abs(x[1]-y[1]) for x,y in zip(pos1, pos2)])
     return dist
 
+class PatternDB:
+    def __init__(self, pattern):
+        self.pattern = pattern
+        self.cache = {}
+
+    def search(self, state):
+        code = state.mask(self.pattern)
+        return self.cache.get(code, 0)
+
+    def add(self, state, steps):
+        code = state.mask(self.pattern)
+        if code not in self.cache:
+            self.cache[code] = steps
+
+            
+patterns = [[1,2,3,4,5,6,7,8],[9,10,11,12,13,14,15]]            
+#patterns = [[x] for x in range(1,16)] # train manhattan
+
+class PatternState(State):
+    def __init__(self, coding, blank, steps=0, parent=None, action=None, cost=0, fcost=0):
+        self.steps = steps
+        State.__init__(self,coding, blank, parent, action, cost, fcost)        
+        
+    def move(self, direction, cost=1):
+        row, col = self.blank
+        ro, co = State.offsets[direction]
+        
+        if row+ro >= 0 and row+ro < board_size and col+co >= 0 and col+co < board_size:       
+            child = PatternState(self.coding,self.blank,self.steps,self,direction,self.cost+cost)
+            child.swap(row,col,ro,co)
+            v = child.at(row,col)
+            if v != 0: child.steps += 1
+            return child
+        else:
+            return None          
+
+            
+def train_pattern(goal, pattern):
+    db = PatternDB(pattern)
+    goal = PatternState(goal.coding, goal.blank)
+    goal.coding = goal.mask(pattern)
+    frontier = deque() # FIFO queue
+    visited = set()
+    visited.add((goal.coding, goal.blank))
+    frontier.append(goal)
+    
+    while frontier:
+        current = frontier.popleft()
+        db.add(current, current.steps)        
+        
+        if current.cost > maxtraindep: break
+        
+        for direction in directions:
+            child = current.move(direction)
+            if not child: continue
+
+            if (child.coding,child.blank) not in visited:
+                frontier.append(child)
+                visited.add((child.coding, child.blank))
+    return db
+    
+pdbs = []        
+def train(goal):
+    for pattern in patterns:
+        pdbs.append(train_pattern(goal, pattern))
+
+import affinity
+
+def do_parallel_train(goal, pattern, cpu):
+    affinity.set_process_affinity_mask(0, cpu)
+    db = train_pattern(goal, pattern)
+    pdbs.append(db)
+    
+def parallel_train(goal):
+    t1 = Process(target=do_parallel_train, args=(goal, patterns[0], 1))
+    t2 = Process(target=do_parallel_train, args=(goal, patterns[1], 2))
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()
+    
+        
+def h_patterndb(state, goal):
+    h = sum([pdb.search(state) for pdb in pdbs])
+    return h
         
 def h_linear_conflict(s, goal):
     # return a priority queue
@@ -332,7 +431,11 @@ def h_linear_conflict(s, goal):
             lci += 1
         lcs.append(lci)
     return 2*sum(lcs) +  h_manhattan(s, goal)
-     
+
+def astar_pattern(start, goal):
+    '''A* - Pattern DBs'''
+    return search(start, goal, uniform_cost, h_patterndb)
+    
 def mygreedy(start, goal):
     '''Greedy - Manhattan + Linear conflicts'''
     return search(start, goal, zero_cost, h_linear_conflict)
@@ -369,20 +472,23 @@ def parse_state(statestr):
     rows = [map(int, row[1:-1].split(' ')) for row in rowsstr[0:-1]]
 
     state = State(0L,blank)
-    for r,c in itertools.product(range(board_size), range(board_size)):
+    for r,c in loops:
         state.set(r,c,rows[r][c])
     return state
+import time
 
 if __name__ == "__main__":
     # if len(sys.argv) != 3:
     #     print "Usage: python puzzle.py <start-state> <goal-state>"
     #     sys.exit(1)
-
     start = parse_state(moderate)
     goal = parse_state(goal1)
-    start = generate(goal, 10)
-    
-    algos = [bfs,dfs,idfs,uniform,astar, greedy, myastar, mygreedy]
+
+    t = time.time()
+    train(goal)
+    print time.time() - t
+    #    algos = [bfs,dfs,idfs,uniform,astar, greedy, myastar, mygreedy]
+    algos = [astar, astar_pattern]
         
     solutions = [solve(start, goal, algo) for algo in algos]
 

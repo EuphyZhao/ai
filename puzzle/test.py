@@ -1,13 +1,16 @@
 from puzzle import *
 
-difficulty = 22
-rounds = 10
+difficulty = 20
+rounds = 1
 goal = parse_state(goal1)
 #algos = [bfs,dfs,idfs,uniform,astar, greedy, myastar, mygreedy]
-algos = [astar,myastar]
+algos = [astar,myastar,astar_pattern]
 
 if __name__ == "__main__":
+    train(goal)
 
+    print "Training finishes."
+    
     # single round
     game = generate(goal, difficulty)
     solutions = [solve(game, goal, algo) for algo in algos]
