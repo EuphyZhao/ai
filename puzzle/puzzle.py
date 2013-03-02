@@ -4,11 +4,9 @@
 """
 
 import sys
-from multiprocessing import Process
 import string
 import heapq
 import itertools
-from copy import copy
 from random import randint
 from random import shuffle
 from collections import deque
@@ -19,7 +17,7 @@ from collections import deque
 directions = ['N','S','W','E']
 maxnodes = 50000
 maxdepth = 12
-maxtraindep = 20
+maxtraindep = 15
 
 N = 15
 board_size = 4
@@ -368,22 +366,6 @@ pdbs = []
 def train(goal):
     for pattern in patterns:
         pdbs.append(train_pattern(goal, pattern))
-
-import affinity
-
-def do_parallel_train(goal, pattern, cpu):
-    affinity.set_process_affinity_mask(0, cpu)
-    db = train_pattern(goal, pattern)
-    pdbs.append(db)
-    
-def parallel_train(goal):
-    t1 = Process(target=do_parallel_train, args=(goal, patterns[0], 1))
-    t2 = Process(target=do_parallel_train, args=(goal, patterns[1], 2))
-    t1.start()
-    t2.start()
-    t1.join()
-    t2.join()
-    
         
 def h_patterndb(state, goal):
     h = sum([pdb.search(state) for pdb in pdbs])
@@ -484,9 +466,9 @@ if __name__ == "__main__":
     start = parse_state(moderate)
     goal = parse_state(goal1)
 
-    t = time.time()
+    t = time.clock()
     train(goal)
-    print time.time() - t
+    print "Training time: " + str(time.clock() - t)  + " cpu seconds"
     #    algos = [bfs,dfs,idfs,uniform,astar, greedy, myastar, mygreedy]
     algos = [astar, astar_pattern]
         
