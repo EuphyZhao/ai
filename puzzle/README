@@ -1,0 +1,40 @@
+1. Heuristics
+I implemented three heuristics for A* search and greedy search.
+(1) Manhattan distance
+(2) Manhattan distance + linear conflicts
+(3) Pattern databases
+
+Note that all these three heuristics are admissible heuristics, so we never have to update the nodes in the CLOSED list.
+
+Algorithm references can be found at the end of the document.
+
+2. Implementation details
+(1) Representing the state as a 64-bit long
+We can encode a state in a 64-bit long, and all state transformations can be performed directly on this compressed representation via bit manipulation. The encoded representation will save space and improve efficiency as we avoid copying the state.
+
+(2) Be functional
+I implement a general "search" function which takes two functions as parameters, namely the cost function "costfun" and heuristic function "hfun". For uniform cost search, the costfun is the uniform cost function and the heuristic is none. For greedy, the cost function is none.
+
+For BFS and DFS, I did not reuse this general search function because they need different data structures. The general search uses a priority queue to keep the OPEN list, BFS uses a queue and DFS uses a stack.
+
+(3) Cut-off
+In order to show some results in a reasonable time, I set several cut-off values.
+Because of space and time constraint, I limit the depth of the pattern database training. Because I might run into some states we have never seen in the training step, I pick the maximum of pattern database heuristic and manhattan distance as the fhat function.
+I set a max depth limit for DFS and IDFS.
+I set a max number of nodes limit for other searchs.
+
+
+3. Testing
+(1) Puzzle generator
+I implement two puzzle generators: the first generate a random puzzle "generate_random", the second generate a puzzle with diffculty level "generate". The higher the difficulty, the more steps it takes to solve the puzzle.
+
+In the testing script, I first generate a puzzle and print out the solution of each algorithm. I also create 10 puzzles of the same difficulty and print out the average performance of each algorithm. The script can be also used to test the efficiency of each algorithm.
+
+(2) Result analysis
+The pattern database heuristic is the most accurate one if we have obtained the estimation in the training phase. For example, if the problem can be solved in 15 steps, and our training depth is 20, this approach will find the solution faster on average than the other two heuristics. Since we greatly cut down the search space when generating the pattern database, I can imagine we don't need a very powerful machine to exhaust all the states for a pattern.
+
+Manhattan distance + Linear conflicts is always greater than Manhattan distance, so it outperforms Manhattan distance.
+
+4. References
+[1]O. Hansson, A. Mayer, and M. Yung, "Criticizing Solutions to Relaxed Models Yields Powerful Admissible Heuristics," Information Sciences, Vol. 63, Issue 3, pp. 207-227, 1992.
+[2]A. Felner, R. Korf, and S. Hanan, "Disjoint pattern database heuristics," Artificial Intelligence, 2002

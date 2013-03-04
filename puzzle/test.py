@@ -1,10 +1,9 @@
 from puzzle import *
 
-difficulty = 20
-rounds = 1
+difficulty = 8
+rounds = 5
 goal = parse_state(goal1)
-#algos = [bfs,dfs,idfs,uniform,astar, greedy, myastar, mygreedy]
-algos = [astar,myastar,astar_pattern]
+algos = [bfs,dfs,idfs,uniform,astar, greedy, astar_lc, greedy_lc, astar_pattern]
 
 if __name__ == "__main__":
     train(goal)

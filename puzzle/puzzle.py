@@ -15,9 +15,9 @@ from collections import deque
 # Board settings
 
 directions = ['N','S','W','E']
-maxnodes = 50000
-maxdepth = 12
-maxtraindep = 15
+maxnodes = 100000
+maxdepth = 20
+maxtraindep = 18
 
 N = 15
 board_size = 4
@@ -70,7 +70,7 @@ class State:
                 masked &= ~(N<<((r*4+c)*4))
         return masked
         
-    def __init__(self, coding, blank, parent=None, action=None, cost=0, fcost=0):
+    def __init__(self, coding, blank, parent=None, action=None, cost=0):
         self.coding = coding
         self.blank = blank
         self.parent = parent
@@ -153,7 +153,7 @@ def generate(goal, nsteps):
             current = next
             step += 1
     current.parent = current.action = None
-    current.cost = current.fcost = 0
+    current.cost = 0
     return current
 
 #------------------------
@@ -277,11 +277,9 @@ def search(start, goal, costfun, hfun):
                 
     return (None, (total, repeats, len(frontier), len(visited)-len(frontier)-1))
     
-def uniform(start, goal):
-    '''Uniform'''
-    def h_none(state1, state2):
-        return 0
-    return search(start, goal, uniform_cost, h_none)
+
+def h_none(state1, state2):
+    return 0
 
 def uniform_cost(action):
     return 1
@@ -320,9 +318,9 @@ patterns = [[1,2,3,4,5,6,7,8],[9,10,11,12,13,14,15]]
 #patterns = [[x] for x in range(1,16)] # train manhattan
 
 class PatternState(State):
-    def __init__(self, coding, blank, steps=0, parent=None, action=None, cost=0, fcost=0):
+    def __init__(self, coding, blank, steps=0, parent=None, action=None, cost=0):
         self.steps = steps
-        State.__init__(self,coding, blank, parent, action, cost, fcost)        
+        State.__init__(self,coding, blank, parent, action, cost)        
         
     def move(self, direction, cost=1):
         row, col = self.blank
@@ -369,7 +367,7 @@ def train(goal):
         
 def h_patterndb(state, goal):
     h = sum([pdb.search(state) for pdb in pdbs])
-    return h
+    return max(h, h_manhattan(state,goal))
         
 def h_linear_conflict(s, goal):
     # return a priority queue
@@ -414,18 +412,21 @@ def h_linear_conflict(s, goal):
         lcs.append(lci)
     return 2*sum(lcs) +  h_manhattan(s, goal)
 
+def uniform(start, goal):
+    '''Uniform'''
+    return search(start, goal, uniform_cost, h_none)
+    
 def astar_pattern(start, goal):
     '''A* - Pattern DBs'''
     return search(start, goal, uniform_cost, h_patterndb)
     
-def mygreedy(start, goal):
+def greedy_lc(start, goal):
     '''Greedy - Manhattan + Linear conflicts'''
     return search(start, goal, zero_cost, h_linear_conflict)
 
-def myastar(start, goal):
+def astar_lc(start, goal):
     '''A* - Manhattan + Linear conflicts'''
     return search(start, goal, uniform_cost, h_linear_conflict)
-
 
 def astar(start, goal):
     '''A* - Manhattan'''
@@ -440,6 +441,7 @@ def solve(puzzle, goal, algo):
     return Solution(algo.__doc__, solution[0], solution[1])
 
 hard = "((1 5 3 7) (4 9 2 11) (8 13 10 14) (12 15 0 6) (3 2))"
+hard2 = "( (1 2 3 7) (4 5 6 15) (8 9 11 0) (12 13 14 10) (2 3) )"
 easy = "((1 2 3 0) (4 5 6 7) (8 9 10 11) (12 13 14 15) (0 3))"
 moderate = "((1 2 6 3) (4 5 10 7) (0 9 14 11) (8 12 13 15) (2 0))"
 goal1 = "((0 1 2 3) (4 5 6 7) (8 9 10 11) (12 13 14 15) (0 0))"
@@ -457,20 +459,25 @@ def parse_state(statestr):
     for r,c in loops:
         state.set(r,c,rows[r][c])
     return state
+
 import time
 
 if __name__ == "__main__":
-    # if len(sys.argv) != 3:
-    #     print "Usage: python puzzle.py <start-state> <goal-state>"
-    #     sys.exit(1)
-    start = parse_state(moderate)
-    goal = parse_state(goal1)
+    if len(sys.argv) != 3:
+        print "Usage: python puzzle.py <start-state> <goal-state>"
+        sys.exit(1)
+    start = parse_state(sys.argv[1])
+    goal = parse_state(sys.argv[2])
 
     t = time.clock()
+    print "Training patterns: maximum training depth is %d" % maxtraindep
     train(goal)
     print "Training time: " + str(time.clock() - t)  + " cpu seconds"
-    #    algos = [bfs,dfs,idfs,uniform,astar, greedy, myastar, mygreedy]
-    algos = [astar, astar_pattern]
+
+    print "Cutoff depth for DFS and IDFS is %d" % maxdepth
+    print "Cutoff nodes visited for uniform/greedy/astar search is %d" % maxnodes
+    
+    algos = [bfs,dfs,idfs,uniform,astar,greedy,astar_lc,greedy_lc,astar_pattern]
         
     solutions = [solve(start, goal, algo) for algo in algos]
 
