@@ -246,8 +246,7 @@ def search(start, goal, costfun, hfun):
     frontier = []
         #    explored = []
     visited = set()
-    start.fvalue = hfun(start, goal)
-    heapq.heappush(frontier, (start.fvalue, start))
+    heapq.heappush(frontier, (hfun(start,goal), start))
     visited.add(start.coding)
 
     while frontier:
@@ -262,17 +261,17 @@ def search(start, goal, costfun, hfun):
             child = current.move(direction, costfun(direction))
             if child is None: continue
 
-            child.fvalue = child.cost + hfun(child, goal)                          
+            fvalue = child.cost + hfun(child, goal)                          
             total += 1
             if child.coding not in visited:
-                heapq.heappush(frontier, (child.fvalue, child))
+                heapq.heappush(frontier, (fvalue, child))
                 visited.add(child.coding)
             else:
                 repeats += 1    
                 # Ugly update
                 index = [idx for idx in range(len(frontier)) if frontier[idx][1]==child]
-                if len(index) == 1 and frontier[index[0]][0] > child.fvalue:
-                    frontier[index[0]] = (child.fvalue, child)
+                if len(index) == 1 and frontier[index[0]][0] > fvalue:
+                    frontier[index[0]] = (fvalue, child)
                     heapq.heapify(frontier)
                 
     return (None, (total, repeats, len(frontier), len(visited)-len(frontier)-1))
@@ -469,13 +468,13 @@ if __name__ == "__main__":
     start = parse_state(sys.argv[1])
     goal = parse_state(sys.argv[2])
 
-    t = time.clock()
     print "Training patterns: maximum training depth is %d" % maxtraindep
-    train(goal)
-    print "Training time: " + str(time.clock() - t)  + " cpu seconds"
-
     print "Cutoff depth for DFS and IDFS is %d" % maxdepth
     print "Cutoff nodes visited for uniform/greedy/astar search is %d" % maxnodes
+
+    t = time.clock()
+    train(goal)
+    print "Training time: " + str(time.clock() - t)  + " cpu seconds"
     
     algos = [bfs,dfs,idfs,uniform,astar,greedy,astar_lc,greedy_lc,astar_pattern]
         
