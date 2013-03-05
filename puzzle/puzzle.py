@@ -15,7 +15,7 @@ from collections import deque
 # Board settings
 
 directions = ['N','S','W','E']
-maxnodes = 100000
+maxnodes = 50000
 maxdepth = 20
 maxtraindep = 18
 
@@ -163,15 +163,13 @@ def do_dfs(start, goal, maxd):
     total = repeats = 0
     visited = set()
     frontier = [] # use list to simulate the stack
-    #    explored = []
     frontier.append(start)
     visited.add(start.coding)
 
     while frontier:
         current = frontier.pop()
         if current.win(goal):
-            return (current.trace(), (total, repeats, len(frontier), len(visited)-len(frontier)-1))
-        #        explored.append(current)
+            return (current.trace(), (total, repeats, len(frontier), 0))
         
         if current.cost >= maxd: continue
 
@@ -180,18 +178,30 @@ def do_dfs(start, goal, maxd):
             if not child: continue
 
             total += 1
+            frontier.append(child)
             if child.coding not in visited:
                 visited.add(child.coding)
-                frontier.append(child)
             else:
                 repeats += 1
+    return (None, (total, repeats, len(frontier), 0))
 
-    return (None, (total, repeats, len(frontier), len(visited)-len(frontier)-1))
+# TODO: statistics not counted
+def dfs_recursive(node, goal, depth):
+    if node.win(goal):
+        return (node.trace(), (0,0,0,0))
+    elif depth == 0: return (None,(0,0,0,0))
 
+    for direction in directions:
+        child = node.move(direction)
+        if not child: continue
+        result = dfs_recursive(child, goal, depth-1)    
+        if result[0]:
+            return result
+    return (None, (0,0,0,0))
+    
 def dfs(start, goal):
     '''DFS'''
     return do_dfs(start, goal, maxdepth)
-
 
 def idfs(start, goal):
     '''IDFS'''
@@ -213,7 +223,6 @@ def bfs(start, goal):
     '''BFS'''
     total = repeats = 0
     frontier = deque() # FIFO queue
-    #    explored = []
     visited = set()
     visited.add(start.coding)
     frontier.append(start)
@@ -223,7 +232,6 @@ def bfs(start, goal):
 
         if current.win(goal):
             return (current.trace(), (total, repeats, len(frontier), len(visited)-len(frontier)-1))
-        #        explored.append(current)
         
         for direction in directions:
             child = current.move(direction)
@@ -244,7 +252,6 @@ def bfs(start, goal):
 def search(start, goal, costfun, hfun):
     total = repeats = 0    
     frontier = []
-        #    explored = []
     visited = set()
     heapq.heappush(frontier, (hfun(start,goal), start))
     visited.add(start.coding)
@@ -253,7 +260,6 @@ def search(start, goal, costfun, hfun):
         f, current = heapq.heappop(frontier)
         if current.win(goal):
             return (current.trace(), (total, repeats, len(frontier), len(visited)-len(frontier)-1))
-        #        explored.append(current)
 
         if total > maxnodes: break
         
@@ -474,12 +480,14 @@ if __name__ == "__main__":
 
     t = time.clock()
     train(goal)
-    print "Training time: " + str(time.clock() - t)  + " cpu seconds"
-    
-    algos = [bfs,dfs,idfs,uniform,astar,greedy,astar_lc,greedy_lc,astar_pattern]
-        
-    solutions = [solve(start, goal, algo) for algo in algos]
+    print "Training time: ", time.clock() - t, " cpu seconds"
 
+    algos = [bfs,dfs,idfs,uniform,astar,greedy,astar_lc,greedy_lc,astar_pattern]
+
+    t = time.clock()        
+    solutions = [solve(start, goal, algo) for algo in algos]
+    print "Running time: ", time.clock() -t
+        
     for solution in solutions:
         print solution
     

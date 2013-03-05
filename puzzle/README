@@ -1,3 +1,8 @@
+0. Input format
+python puzzle.py "((1 2 6 3) (4 5 10 7) (0 9 14 11) (8 12 13 15) (2 0))" "((0 1 2 3) (4 5 6 7) (8 9 10 11) (12 13 14 15) (0 0)))"
+
+(Don't forget the quotes)
+
 1. Heuristics
 I implemented three heuristics for A* search and greedy search.
 (1) Manhattan distance
@@ -23,6 +28,8 @@ Because of space and time constraint, I limit the depth of the pattern database 
 I set a max depth limit for DFS and IDFS.
 I set a max number of nodes limit for other searchs.
 
+(4) Non-recursive DFS
+I implemented both recursive and non-recursive DFS. The non-recursive version is more efficient in my testing. But we cannot do pruning in depth-limited DFS, otherwise we will miss the optimal solution. So accordingly, there is no so-called 'CLOSED' list associated with a DFS or a IDFS. The closed list size is always returned as 0.
 
 3. Testing
 (1) Puzzle generator
