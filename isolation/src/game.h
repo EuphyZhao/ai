@@ -7,12 +7,13 @@
 bool get(Board board, int row, int col);
 void set(Board &board, int row, int col);
 
+const int kBoardSize = 8;
+
 class Game
 {
  private:
 	static const char kFirstSymbol = 'x';
 	static const char kSecondSymbol = 'o';
-	static const int kBoardSize = 8;
 	static const Position kFirstPos;
 	static const Position kSecondPos;
 

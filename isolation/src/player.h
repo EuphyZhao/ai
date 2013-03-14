@@ -30,11 +30,27 @@ class HumanPlayer : public Player
 
 };
 
+class DumbPlayer : public Player
+{
+ private:
+	static const unsigned int kMaxAttempts = 100;
+ public:
+ DumbPlayer(string name) : Player(name) {}
+
+	virtual Position Move(Board board, Position my, Position her);
+
+};
+
+
 class MyPlayer : public Player
 {
  public:
  MyPlayer(string name) : Player(name) {}
 	virtual Position Move(Board board, Position my, Position her);
 };
+
+
+bool TryMove(Board board, Position cur, Direction dir, unsigned int nsteps);
+
 
 #endif // PLAYER_H_
