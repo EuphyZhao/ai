@@ -2,6 +2,7 @@
 #define PLAYER_H_
 
 #include <iostream>
+#include <vector>
 #include "types.h"
 
 using namespace std;
@@ -44,13 +45,27 @@ class DumbPlayer : public Player
 
 class MyPlayer : public Player
 {
+ private:
+	static const int kMaxDepth = 10;
+	double Eval(Board board, Position my, Position her);
+	bool Cutoff(Board board, Position my, Position her, int depth);
+	Position AlphaBeta(Board board, Position my, Position her);
+	ScoreAction MaxValue(Board board, Position my, Position her,
+						 double alpha, double beta, int depth);
+	ScoreAction MinValue(Board board, Position my, Position her,
+						 double alpha, double beta, int depth);
+
+
  public:
  MyPlayer(string name) : Player(name) {}
 	virtual Position Move(Board board, Position my, Position her);
 };
 
 
-bool TryMove(Board board, Position cur, Direction dir, unsigned int nsteps);
+Board TryMove(Board board, Position cur, Direction dir, unsigned int nsteps);
+Position MakeMove(Position cur, Direction dir, unsigned int nsteps);
+
+vector<Action> GenerateActions();
 
 
 #endif // PLAYER_H_

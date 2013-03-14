@@ -8,6 +8,7 @@ bool get(Board board, int row, int col);
 void set(Board &board, int row, int col);
 
 const int kBoardSize = 8;
+const Board kInvalidBoard = 0L;
 
 class Game
 {
