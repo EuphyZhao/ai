@@ -1,5 +1,7 @@
 #include <cassert>
 #include <cmath>
+#include <stdio.h>
+#include <stdlib.h>
 #include <iostream>
 #include "game.h"
 #include "player.h"
@@ -19,6 +21,15 @@ bool operator==(const Position& lhs, const Position& rhs)
     return lhs.row == rhs.row && lhs.col == rhs.col;
 }
 
+bool operator<(const Position& lhs, const Position& rhs)
+{
+	if (lhs.row != rhs.row)
+		return lhs.row < rhs.row;
+	else
+		return lhs.col < rhs.col;
+}
+
+
 Game::~Game()
 {
 	for (int player = 0; player < 1; player++) {
@@ -33,13 +44,13 @@ bool Game::DoMove(Position cur, int ro, int co, unsigned int nsteps)
 	int row = cur.row, col = cur.col;
 	// validate
 	for (unsigned int step = 1; step <= nsteps; step++) {
-		if (get(board_, row + ro * step, col + co * step)) {
+		if (getpos(board_, row + ro * step, col + co * step)) {
 			return false;
 		}
 	}
 	// do move
 	for (unsigned int step = 1; step <= nsteps; step++) {
-		set(board_, row + ro * step, col + co * step);
+		setpos(board_, row + ro * step, col + co * step);
 	}
 	return true;
 }
@@ -125,22 +136,23 @@ void Game::Play()
 
 		print();
 
+		getchar();
+
 		// flip the turn
 		mover = 1 - mover;
 	}
 }
 
 
-bool get(Board board, int row, int col)
+bool getpos(Board board, int row, int col)
 {
 	int shift = row * 8 + col;
 	return (board >> shift) & 1L;
 }
 
-void set(Board &board, int row, int col)
+void setpos(Board &board, int row, int col)
 {
 	int shift = row * 8 + col;
-	cout << board << endl;
 	board |= (1L << shift);
 }
 
@@ -165,7 +177,7 @@ void Game::print()
 				cout << kFirstSymbol;
 			else if (positions_[1].row == r && positions_[1].col == c)
 				cout << kSecondSymbol;
-			else if (get(board_, r, c))
+			else if (getpos(board_, r, c))
 				cout << '*';
 			else
 				cout << '-';
@@ -177,7 +189,7 @@ void Game::print()
 int main(int argc, char *argv[])
 {
 	Game g;
-	Player *first = new HumanPlayer("human");
+	Player *first = new MyPlayer("my");
 	Player *second = new DumbPlayer("dumb");
 	g.AddFirstPlayer(first);
 	g.AddSecondPlayer(second);

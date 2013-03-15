@@ -4,8 +4,8 @@
 #include "types.h"
 #include "player.h"
 
-bool get(Board board, int row, int col);
-void set(Board &board, int row, int col);
+bool getpos(Board board, int row, int col);
+void setpos(Board &board, int row, int col);
 
 const int kBoardSize = 8;
 const Board kInvalidBoard = 0L;
@@ -32,8 +32,8 @@ class Game
 		board_ = 0L;
 		positions_[0] = kFirstPos;
 		positions_[1] = kSecondPos;
-		set(board_, kFirstPos.row, kFirstPos.col);
-		set(board_, kSecondPos.row, kSecondPos.col);
+		setpos(board_, kFirstPos.row, kFirstPos.col);
+		setpos(board_, kSecondPos.row, kSecondPos.col);
 	}
 
 	~Game();

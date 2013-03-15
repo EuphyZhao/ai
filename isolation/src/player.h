@@ -36,7 +36,9 @@ class DumbPlayer : public Player
  private:
 	static const unsigned int kMaxAttempts = 100;
  public:
- DumbPlayer(string name) : Player(name) {}
+ DumbPlayer(string name) : Player(name) {
+		srand(time(NULL));
+}
 
 	virtual Position Move(Board board, Position my, Position her);
 
@@ -46,7 +48,12 @@ class DumbPlayer : public Player
 class MyPlayer : public Player
 {
  private:
-	static const int kMaxDepth = 10;
+	// I want to evaluate when she is taking the move
+	// otherwise I can go one step further
+	// so set max depth to an even number
+	static const int kMaxDepth = 6;
+
+	bool Gameover(Board board, Position pos);
 	double Eval(Board board, Position my, Position her);
 	bool Cutoff(Board board, Position my, Position her, int depth);
 	Position AlphaBeta(Board board, Position my, Position her);
@@ -65,7 +72,7 @@ class MyPlayer : public Player
 Board TryMove(Board board, Position cur, Direction dir, unsigned int nsteps);
 Position MakeMove(Position cur, Direction dir, unsigned int nsteps);
 
-vector<Action> GenerateActions();
+vector<Action> GenerateActions(Board board, Position cur);
 
 
 #endif // PLAYER_H_
