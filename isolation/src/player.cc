@@ -12,9 +12,6 @@
 
 using namespace std;
 
-// I can prune actions for my moves
-// But I cannot prune actions for my opponenents
-// Avoid trap yourself
 vector<Action> GenerateActions(Board board, Position cur)
 {
 	vector<Action> actions;
@@ -27,13 +24,6 @@ vector<Action> GenerateActions(Board board, Position cur)
 	return actions;
 }
 
-
-// Prune all the suicide moves
-// A suicide move is defined as
-// if I am isolated from my opponent
-// the slot I can reach is less than her
-// The pruning needs to be precicely accurate
-// because win/loss is decided by these small steps
 
 // return 0 if isolated
 // return +n if i can win in n steps
@@ -64,7 +54,7 @@ int MyPlayer::IsIsolated(Board board, Position my, Position her)
 		frontier.pop();
 
 		for (int d = 0; d < 8; d++) {
-			Position next = MakeMove(node.cur, (Direction)d, 1);
+			Position next = MakeMove(node.cur, Action((Direction)d, 1));
 			// we are reachable
 			if (next == her) {
 				table_.insert(board,my,her,false);
@@ -72,7 +62,7 @@ int MyPlayer::IsIsolated(Board board, Position my, Position her)
 			}
 
 			Board nboard;
-			if ((nboard=TryMove(board, node.cur, (Direction)d, 1))
+			if ((nboard=TryMove(node.board, node.cur, (Direction)d, 1))
 				&& visited.find(BfsNode(nboard, next))==visited.end()) {
 				frontier.push(BfsNode(nboard, next, node.depth+1));
 				visited.insert(BfsNode(nboard, next));
@@ -81,14 +71,15 @@ int MyPlayer::IsIsolated(Board board, Position my, Position her)
 	}
 
 	// check how many steps does she have
-	int hersteps = MaxClosure(board, her);
+	// int hersteps = MaxClosure(board, her);
 
-	table_.insert(board,my,her,true);
+	// table_.insert(board,my,her,true);
 	
-	if (maxsteps > hersteps)
-		return maxsteps;
-	else
-		return -maxsteps; // i am going to lose
+	// if (maxsteps >= hersteps)
+	// 	return maxsteps;
+	// else
+	// 	return -maxsteps; // i am going to lose
+	return 1;
 }
 
 
@@ -112,17 +103,41 @@ int MyPlayer::MaxClosure(Board board, Position cur)
 		frontier.pop();
 
 		for (int d = 0; d < 8; d++) {
-			Position next = MakeMove(node.cur, (Direction)d, 1);
+			Position next = MakeMove(node.cur, Action((Direction)d, 1));
 
 			Board nboard;
-			if ((nboard=TryMove(board, node.cur, (Direction)d, 1))
-				&& visited.find(BfsNode(nboard, next))==visited.end()) {
-				frontier.push(BfsNode(nboard, next, node.depth+1));
-				visited.insert(BfsNode(nboard, next));
+			if ((nboard=TryMove(node.board, node.cur, (Direction)d, 1))) {
+				if (visited.find(BfsNode(nboard, next))==visited.end()) {
+					frontier.push(BfsNode(nboard, next, node.depth+1));
+					visited.insert(BfsNode(nboard, next));
+				}
+				// else {
+				// 	set<BfsNode,BfsNodeCompare>::iterator it = visited.find(BfsNode(nboard, next));
+				// 	cout << "Visited board." << endl;
+				// 	print(it->board, it->cur, Position(-1, -1));
+				// 	cout << "Current move." << endl;
+				// 	getchar();
+				// }
 			}
 		}
 	}
 	return maxsteps;
+}
+
+
+int MyPlayer::DfsClosure(Board board, Position cur, int depth)
+{
+	int maxsteps = 0;
+	for (int d = 0; d < 8; d++) {
+		Position next = MakeMove(cur, Action((Direction)d, 1));
+		Board nboard = TryMove(board, cur, (Direction)d, 1);
+		if (nboard != kInvalidBoard) {
+			int steps = DfsClosure(nboard, next, depth+1);
+			if (steps > maxsteps)
+				maxsteps = steps;
+		}
+	}
+	return maxsteps + 1;
 }
 
 
@@ -146,20 +161,20 @@ Board TryMove(Board board, Position cur, Direction dir, unsigned int nsteps)
 			return kInvalidBoard;
 		}
 		else {
-			setpos(nboard, r, col + c);
+			setpos(nboard, r, c);
 		}
 	}
 
 	return nboard;
 }
 
-Position MakeMove(Position cur, Direction dir, unsigned int nsteps)
+Position MakeMove(Position cur, Action action)
 {
 	int row = cur.row, col = cur.col;
-	int ro = kOffsets[dir][0];
-	int co = kOffsets[dir][1];
+	int ro = kOffsets[action.dir][0];
+	int co = kOffsets[action.dir][1];
 
-	return Position(row+ro*nsteps, col+co*nsteps);
+	return Position(row+ro*action.steps, col+co*action.steps);
 }
 
 Position HumanPlayer::Move(Board board, Position my, Position her)
@@ -179,7 +194,7 @@ Position DumbPlayer::Move(Board board, Position my, Position her)
 	}
 	else {
 		Action action = actions[rand() % actions.size()];
-		return MakeMove(my, action.dir, action.steps);
+		return MakeMove(my, action);
 	}
 }
 
@@ -224,7 +239,7 @@ Position MyPlayer::AlphaBeta(Board board, Position my, Position her)
 	ScoreAction sa = MaxValue(board, my, her, alpha, beta, 0);
 	
 	if (TryMove(board, my, sa.action.dir, sa.action.steps)) {
-		return MakeMove(my, sa.action.dir, sa.action.steps);
+		return MakeMove(my, sa.action);
 	}
 	else // we are dead
 		return Position(-1, -1);
@@ -254,7 +269,7 @@ ScoreAction MyPlayer::MaxValue(Board board, Position my, Position her,
 	for (unsigned int i = 0; i < actions.size(); i++) {
 		Direction d = actions[i].dir;
 		int steps = actions[i].steps;
-		Position npos = MakeMove(my, d, steps);
+		Position npos = MakeMove(my, actions[i]);
 
 		Board nboard;
 		double score;
@@ -281,7 +296,7 @@ ScoreAction MyPlayer::MaxValue(Board board, Position my, Position her,
 
 		// I have lost
 		if (alpha == DMIN && depth == 0) {
-			cout << "I have forseen my loss!" << endl;
+			cout << "I will lose if I go this step! " << npos.row+1 << npos.col+1 << endl;
 		}
 
 		// monitor alpha
@@ -319,7 +334,7 @@ ScoreAction MyPlayer::MinValue(Board board, Position my, Position her,
 	for (unsigned int i = 0; i < actions.size(); i++) {
 		Direction d = actions[i].dir;
 		int steps = actions[i].steps;
-		Position npos = MakeMove(her, d, steps);
+		Position npos = MakeMove(her, actions[i]);
 
 		Board nboard;
 		double score;
@@ -357,18 +372,35 @@ ScoreAction MyPlayer::MinValue(Board board, Position my, Position her,
 
 Position MyPlayer::Move(Board board, Position my, Position her)
 {
-	// if we are in isolation
-	if (isolated_) {
-		if (stored_path_.size() != 0) {
-			Position move = stored_path_.front();
-			stored_path_.pop();
-			return move;
+
+	vector<Action> actions = GenerateActions(board, my);
+
+	while (!actions.empty()) {
+		int index = rand() % actions.size();
+		Action action = actions[index];
+
+		Board nboard = TryMove(board, my, action.dir, action.steps);
+		Position npos = MakeMove(my, action);
+
+		if (IsIsolated(nboard, npos, her)) {
+			cout << "Isolate if move to " << npos.row+1 << ","<< npos.col+1<< endl;
+			int mysteps = MaxClosure(nboard, npos);
+			int hersteps = MaxClosure(nboard, her);
+			//			int mysteps2 = DfsClosure(nboard, npos, 0);
+			//			int hersteps2 = DfsClosure(nboard, her, 0);
+			cout << "my " << mysteps<< ","<< "her " << hersteps << endl;
+			//			cout << "mydfs " << mysteps2<< ","<< "herdfs " << hersteps2 << endl;
+			if (mysteps > hersteps)
+				return npos;
+			else
+				actions.erase(actions.begin()+index);
 		}
 		else
-			return Position(-1, -1);
+			return npos;
 	}
-	
 
-	Position move = AlphaBeta(board, my, her);
-	return move;
+	return Position(-1, -1);
+
+	//	Position move = AlphaBeta(board, my, her);
+	//	return move;
 }

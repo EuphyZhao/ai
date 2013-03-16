@@ -2,6 +2,8 @@
 #include <cmath>
 #include <stdio.h>
 #include <stdlib.h>
+#include <queue>
+#include <set>
 #include <iostream>
 #include "game.h"
 #include "player.h"
@@ -78,6 +80,7 @@ bool Game::ApplyMove(int mover, Position move)
 
 	Position current = positions_[mover];
 	int ro, co, nsteps;
+	
 	if (current.row == move.row) { // horizontal move
 		ro = 0;
 		co = current.col < move.col ? 1 : -1;
@@ -215,6 +218,7 @@ void Game::print()
 		cout << endl;
 	}
 }
+
 
 int main(int argc, char *argv[])
 {

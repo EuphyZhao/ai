@@ -57,7 +57,7 @@ class MyPlayer : public Player
 	// I want to evaluate when she is taking the move
 	// otherwise I can go one step further
 	// so set max depth to an even number
-	static const int kMaxDepth = 6;
+	static const int kMaxDepth = 4;
 
 	bool Gameover(Board board, Position pos);
 
@@ -74,6 +74,7 @@ class MyPlayer : public Player
 
     int IsIsolated(Board board, Position my, Position her);
 	int MaxClosure(Board board, Position cur);
+	int DfsClosure(Board board, Position cur, int depth);
 
 	Table table_;
 	bool isolated_;
@@ -88,7 +89,7 @@ class MyPlayer : public Player
 
 
 Board TryMove(Board board, Position cur, Direction dir, unsigned int nsteps);
-Position MakeMove(Position cur, Direction dir, unsigned int nsteps);
+Position MakeMove(Position cur, Action action);
 
 vector<Action> GenerateActions(Board board, Position cur);
 
