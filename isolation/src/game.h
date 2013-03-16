@@ -6,15 +6,16 @@
 
 bool getpos(Board board, int row, int col);
 void setpos(Board &board, int row, int col);
+void print(Board board, Position my, Position her);
 
 const int kBoardSize = 8;
 const Board kInvalidBoard = 0L;
 
+class Player;
+
 class Game
 {
  private:
-	static const char kFirstSymbol = 'x';
-	static const char kSecondSymbol = 'o';
 	static const Position kFirstPos;
 	static const Position kSecondPos;
 
@@ -28,6 +29,9 @@ class Game
 	void Gameover(int mover);
 
  public:
+	static const char kFirstSymbol = 'x';
+	static const char kSecondSymbol = 'o';
+
 	Game() {
 		board_ = 0L;
 		positions_[0] = kFirstPos;

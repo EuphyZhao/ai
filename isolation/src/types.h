@@ -46,7 +46,13 @@ struct BfsNode
 {
 	Board board;
 	Position cur;
+	
+	int depth; // used in max closure
+
 BfsNode(Board b, Position pos) : board(b), cur(pos) {}	
+
+BfsNode(Board b, Position pos, int d)
+: board(b), cur(pos), depth(d) {}	
 };
 
 struct BfsNodeCompare {

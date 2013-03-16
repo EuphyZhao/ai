@@ -2,17 +2,15 @@
 #include <limits>
 #include <queue>
 #include <set>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "types.h"
 #include "player.h"
 #include "game.h"
+#include "table.h"
 
 using namespace std;
-
-// CUTOFF reach is decided by the max search depth
-// Maybe we should limit the CUTOFF happen in My Move or Her Move
-
 
 // I can prune actions for my moves
 // But I cannot prune actions for my opponenents
@@ -24,6 +22,8 @@ vector<Action> GenerateActions(Board board, Position cur)
 		for (int steps = 1; steps < kBoardSize; steps++) 
 			if (TryMove(board, cur, (Direction)d, steps))
 				actions.push_back(Action((Direction)d, steps));
+			else
+				break;
 	return actions;
 }
 
@@ -35,55 +35,94 @@ vector<Action> GenerateActions(Board board, Position cur)
 // The pruning needs to be precicely accurate
 // because win/loss is decided by these small steps
 
-
-// given current configuration
-// check we are isolated
-// check if there is a skyline between me and her
-// It may not be a general skyline problem. because there is a pattern in movement
-
-// There is no path from my to her
-// A DFS?
-bool IsIsolated(Board board, Position my, Position her)
+// return 0 if isolated
+// return +n if i can win in n steps
+// return -n if i will lose in n steps
+int MyPlayer::IsIsolated(Board board, Position my, Position her)
 {
+	// check the table first
+	int lookup = table_.isolated(board, my, her);
+
+	if (lookup == 1)
+		return true;
+	else if (lookup == -1)
+		return false;
+	
 	// BFS
 	queue<BfsNode> frontier;
-	frontier.push(BfsNode(board, my));
+	frontier.push(BfsNode(board, my, 0));
 
 	std::set<BfsNode, BfsNodeCompare> visited;
+	visited.insert(BfsNode(board, my));
 
+	int maxsteps = 0; // keep max steps I left
 	while (!frontier.empty()) {
 		BfsNode node = frontier.front();
+		if (node.depth > maxsteps)
+			maxsteps = node.depth;
+
 		frontier.pop();
 
-		for (int d = 0; d < 8; d++)
-			for (int steps = 1; steps < kBoardSize; steps++) {
-				Position next = MakeMove(node.cur, (Direction)d, steps);
-				// we are reachable
-				if (next == her)
-					return false;
-
-				Board nboard;
-				if ((nboard=TryMove(board, node.cur, (Direction)d, steps))) {
-					frontier.push(BfsNode(nboard, next));
-					visited.insert(BfsNode(nboard, next));
-				}
+		for (int d = 0; d < 8; d++) {
+			Position next = MakeMove(node.cur, (Direction)d, 1);
+			// we are reachable
+			if (next == her) {
+				table_.insert(board,my,her,false);
+				return 0;
 			}
-	}
-	// if we are not isolated, return 0
-	// continue alpha-beta search
 
-	// if we are isolated
-	// die slowly!
-	return true;
+			Board nboard;
+			if ((nboard=TryMove(board, node.cur, (Direction)d, 1))
+				&& visited.find(BfsNode(nboard, next))==visited.end()) {
+				frontier.push(BfsNode(nboard, next, node.depth+1));
+				visited.insert(BfsNode(nboard, next));
+			}
+		}
+	}
+
+	// check how many steps does she have
+	int hersteps = MaxClosure(board, her);
+
+	table_.insert(board,my,her,true);
+	
+	if (maxsteps > hersteps)
+		return maxsteps;
+	else
+		return -maxsteps; // i am going to lose
 }
 
 
 // return the maximum number of steps
 // conditioned on that we are isolated
 // this is deterministic
-int MaxClosure(Board board, Position cur)
+int MyPlayer::MaxClosure(Board board, Position cur)
 {
-	return 0;
+	queue<BfsNode> frontier;
+	frontier.push(BfsNode(board, cur, 0));
+
+	std::set<BfsNode, BfsNodeCompare> visited;
+	visited.insert(BfsNode(board, cur));
+
+	int maxsteps = 0; // keep max steps I left
+	while (!frontier.empty()) {
+		BfsNode node = frontier.front();
+		if (node.depth > maxsteps)
+			maxsteps = node.depth;
+
+		frontier.pop();
+
+		for (int d = 0; d < 8; d++) {
+			Position next = MakeMove(node.cur, (Direction)d, 1);
+
+			Board nboard;
+			if ((nboard=TryMove(board, node.cur, (Direction)d, 1))
+				&& visited.find(BfsNode(nboard, next))==visited.end()) {
+				frontier.push(BfsNode(nboard, next, node.depth+1));
+				visited.insert(BfsNode(nboard, next));
+			}
+		}
+	}
+	return maxsteps;
 }
 
 
@@ -215,14 +254,23 @@ ScoreAction MyPlayer::MaxValue(Board board, Position my, Position her,
 	for (unsigned int i = 0; i < actions.size(); i++) {
 		Direction d = actions[i].dir;
 		int steps = actions[i].steps;
+		Position npos = MakeMove(my, d, steps);
 
 		Board nboard;
+		double score;
 		if (!(nboard = TryMove(board, my, d, steps)))
 			continue;
-			
 
-		ScoreAction sa = MinValue(nboard, MakeMove(my, d, steps), her, alpha, beta, depth+1);
-		double score = sa.score;
+		int isolation = IsIsolated(nboard, npos, her);
+		if (isolation!=0) { // you can reach an isolation state
+			if (isolation > 0)
+				score = DMAX;
+			else
+				score = DMIN;
+		}
+		else // you have to search further
+			score = MinValue(nboard, npos, her, alpha, beta, depth+1).score;
+
 		if (score > alpha) {
 			alpha = score;
 			maxaction = Action(d,steps);
@@ -271,14 +319,23 @@ ScoreAction MyPlayer::MinValue(Board board, Position my, Position her,
 	for (unsigned int i = 0; i < actions.size(); i++) {
 		Direction d = actions[i].dir;
 		int steps = actions[i].steps;
+		Position npos = MakeMove(her, d, steps);
 
 		Board nboard;
+		double score;
 		if (!(nboard = TryMove(board, her, d, steps))) // she tries to move
 			continue;
 			
+		int isolation = IsIsolated(nboard, npos, her);
+		if (isolation!=0) { // you can reach an isolation state
+			if (isolation > 0)
+				score = DMAX;
+			else
+				score = DMIN;
+		}
+		else
+			score = MaxValue(nboard, my, npos, alpha, beta, depth+1).score;
 
-		ScoreAction sa = MaxValue(nboard, my, MakeMove(her, d, steps), alpha, beta, depth+1);
-		double score = sa.score;
 		if (score < beta) {
 			beta = score;
 			minaction = Action(d, steps);
@@ -300,6 +357,18 @@ ScoreAction MyPlayer::MinValue(Board board, Position my, Position her,
 
 Position MyPlayer::Move(Board board, Position my, Position her)
 {
+	// if we are in isolation
+	if (isolated_) {
+		if (stored_path_.size() != 0) {
+			Position move = stored_path_.front();
+			stored_path_.pop();
+			return move;
+		}
+		else
+			return Position(-1, -1);
+	}
+	
+
 	Position move = AlphaBeta(board, my, her);
 	return move;
 }

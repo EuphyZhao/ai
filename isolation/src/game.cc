@@ -157,6 +157,36 @@ void setpos(Board &board, int row, int col)
 }
 
 
+void print(Board board, Position my, Position her)
+{
+
+	// print column header
+	for (int c = 0; c < kBoardSize; c++) {
+		if (c==0)
+			cout << " ";
+		cout << " " << c + 1;
+	}
+	cout << endl;
+
+
+	for (int r = 0; r < kBoardSize; r++) {
+		cout << r + 1;
+		for (int c = 0; c < kBoardSize; c++) {
+			cout << " ";
+			if (my.row == r && my.col == c)
+				cout << Game::kFirstSymbol;
+			else if (her.row == r && her.col == c)
+				cout << Game::kSecondSymbol;
+			else if (getpos(board, r, c))
+				cout << '*';
+			else
+				cout << '-';
+		}
+		cout << endl;
+	}
+}
+
+
 void Game::print()
 {
 
