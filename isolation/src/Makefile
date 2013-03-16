@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-Wall -g
+CFLAGS=-Wall -O3
 LIBS=-lm
 
 all : *.cc *.h

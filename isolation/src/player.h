@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <queue>
+#include <stdlib.h>
 #include "game.h"
 #include "types.h"
 #include "table.h"
@@ -57,7 +58,10 @@ class MyPlayer : public Player
 	// I want to evaluate when she is taking the move
 	// otherwise I can go one step further
 	// so set max depth to an even number
-	static const int kMaxDepth = 4;
+
+	// when kMaxDepth=0, it is equivalent to no alpha-beta
+	// but only has isolation check
+	static const int kMaxDepth = 1;
 
 	bool Gameover(Board board, Position pos);
 
@@ -72,13 +76,16 @@ class MyPlayer : public Player
 	ScoreAction MinValue(Board board, Position my, Position her,
 						 double alpha, double beta, int depth);
 
-    int IsIsolated(Board board, Position my, Position her);
+    bool IsIsolated(Board board, Position my, Position her);
 	int MaxClosure(Board board, Position cur);
-	int DfsClosure(Board board, Position cur, int depth);
+	Position LocalMove(Board board, Position my);
+	int DoLocalMove(Board board, Position cur);
 
 	Table table_;
+
 	bool isolated_;
-	queue<Position> stored_path_;
+	int mysteps_;
+	int hersteps_;
 
  public:
  MyPlayer(string name) : Player(name), isolated_(false) {}

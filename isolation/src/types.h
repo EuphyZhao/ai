@@ -3,19 +3,19 @@
 
 #include <limits>
 
+const double DMIN = std::numeric_limits<double>::min();
+const double DMAX = std::numeric_limits<double>::max();
+
 struct Position
 {
 	int row;
 	int col;
-Position() : row(0), col(0) {}
+Position() : row(-1), col(-1) {}
 Position(int r, int c) : row(r), col(c) {}
 };
 
-bool operator==(const Position& lhs, const Position& rhs);
-bool operator<(const Position& lhs, const Position& rhs);
 
 typedef unsigned long Board;
-
 
 enum Direction {
 	N,S,W,E,NW,NE,SW,SE,
@@ -23,8 +23,7 @@ enum Direction {
 };
 
 
-extern const int kOffsets[8][2];
-
+//extern const int kOffsets[8][2];
 
 struct Action
 {
@@ -34,12 +33,27 @@ struct Action
 Action(Direction d, int s) : dir(d), steps(s) {}
 };
 
+const Action kInvalidAction = Action(INVALID_DIR, -1);
+
 struct ScoreAction
 {
 	double score;
 	Action action;
 ScoreAction(double s, Action act) : score(s), action(act) {}
 };
+
+bool inline operator==(const Position& lhs, const Position& rhs)
+{
+    return lhs.row == rhs.row && lhs.col == rhs.col;
+}
+
+bool inline operator<(const Position& lhs, const Position& rhs)
+{
+	if (lhs.row != rhs.row)
+		return lhs.row < rhs.row;
+	else
+		return lhs.col < rhs.col;
+}
 
 
 struct BfsNode
@@ -63,10 +77,5 @@ struct BfsNodeCompare {
 			return lhs.cur < rhs.cur;
 	}
 };
-
-
-const Action kInvalidAction = Action(INVALID_DIR, -1);
-const double DMIN = std::numeric_limits<double>::min();
-const double DMAX = std::numeric_limits<double>::max();
 
 #endif // TYPES_H_

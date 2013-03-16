@@ -5,30 +5,19 @@
 #include <queue>
 #include <set>
 #include <iostream>
+
 #include "game.h"
 #include "player.h"
+#include "util.h"
 
 using namespace std;
 
-const Position Game::kFirstPos(0,0);
-const Position Game::kSecondPos(7,7);
-
-const int kOffsets[8][2] = {
-	{-1,0},{1,0},{0,-1},{0,1},
-	{-1,-1},{-1,1},{1,-1},{1,1}};
-
-
-bool operator==(const Position& lhs, const Position& rhs)
-{
-    return lhs.row == rhs.row && lhs.col == rhs.col;
-}
-
-bool operator<(const Position& lhs, const Position& rhs)
-{
-	if (lhs.row != rhs.row)
-		return lhs.row < rhs.row;
-	else
-		return lhs.col < rhs.col;
+Game::Game() {
+	board_ = kInvalidBoard;
+	positions_[0] = kFirstPos;
+	positions_[1] = kSecondPos;
+	setpos(board_, kFirstPos.row, kFirstPos.col);
+	setpos(board_, kSecondPos.row, kSecondPos.col);
 }
 
 
@@ -80,7 +69,7 @@ bool Game::ApplyMove(int mover, Position move)
 
 	Position current = positions_[mover];
 	int ro, co, nsteps;
-	
+
 	if (current.row == move.row) { // horizontal move
 		ro = 0;
 		co = current.col < move.col ? 1 : -1;
@@ -109,9 +98,6 @@ bool Game::ApplyMove(int mover, Position move)
 	}
 }
 
-/*
- * Current mover lose the game
- */
 void Game::Gameover(int mover)
 {
 	cout << players_[mover]->name() << " lose!" << endl;
@@ -119,7 +105,7 @@ void Game::Gameover(int mover)
 
 void Game::Play()
 {
-	print();
+	Print();
 
 	int mover = 0;
 	while (1) {
@@ -137,7 +123,7 @@ void Game::Play()
 
 		cout << players_[mover]->name() << " moves to (" << move.row+1 << "," << move.col+1 << ")" << endl;
 
-		print();
+		Print();
 
 		getchar();
 
@@ -147,78 +133,10 @@ void Game::Play()
 }
 
 
-bool getpos(Board board, int row, int col)
+void Game::Print()
 {
-	int shift = row * 8 + col;
-	return (board >> shift) & 1L;
+	print(board_, positions_[0], positions_[1]);
 }
-
-void setpos(Board &board, int row, int col)
-{
-	int shift = row * 8 + col;
-	board |= (1L << shift);
-}
-
-
-void print(Board board, Position my, Position her)
-{
-
-	// print column header
-	for (int c = 0; c < kBoardSize; c++) {
-		if (c==0)
-			cout << " ";
-		cout << " " << c + 1;
-	}
-	cout << endl;
-
-
-	for (int r = 0; r < kBoardSize; r++) {
-		cout << r + 1;
-		for (int c = 0; c < kBoardSize; c++) {
-			cout << " ";
-			if (my.row == r && my.col == c)
-				cout << Game::kFirstSymbol;
-			else if (her.row == r && her.col == c)
-				cout << Game::kSecondSymbol;
-			else if (getpos(board, r, c))
-				cout << '*';
-			else
-				cout << '-';
-		}
-		cout << endl;
-	}
-}
-
-
-void Game::print()
-{
-
-	// print column header
-	for (int c = 0; c < kBoardSize; c++) {
-		if (c==0)
-			cout << " ";
-		cout << " " << c + 1;
-	}
-	cout << endl;
-
-
-	for (int r = 0; r < kBoardSize; r++) {
-		cout << r + 1;
-		for (int c = 0; c < kBoardSize; c++) {
-			cout << " ";
-			if (positions_[0].row == r && positions_[0].col == c)
-				cout << kFirstSymbol;
-			else if (positions_[1].row == r && positions_[1].col == c)
-				cout << kSecondSymbol;
-			else if (getpos(board_, r, c))
-				cout << '*';
-			else
-				cout << '-';
-		}
-		cout << endl;
-	}
-}
-
 
 int main(int argc, char *argv[])
 {

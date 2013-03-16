@@ -4,41 +4,35 @@
 #include "types.h"
 #include "player.h"
 
-bool getpos(Board board, int row, int col);
-void setpos(Board &board, int row, int col);
-void print(Board board, Position my, Position her);
-
 const int kBoardSize = 8;
 const Board kInvalidBoard = 0L;
+const char kFirstSymbol = 'x';
+const char kSecondSymbol = 'o';
+const Position kFirstPos(0,0);
+const Position kSecondPos(7,7);
+
+const int kOffsets[8][2] = {
+	{-1,0},{1,0},{0,-1},{0,1},
+	{-1,-1},{-1,1},{1,-1},{1,1}};
+
+
 
 class Player;
 
 class Game
 {
  private:
-	static const Position kFirstPos;
-	static const Position kSecondPos;
-
 	Board board_;
 	Position positions_[2];
 	Player *players_[2];
 
-	/* return false if the move is illegal */
 	bool ApplyMove(int mover, Position move);
 	bool DoMove(Position cur, int ro, int co, unsigned int nsteps);
 	void Gameover(int mover);
 
  public:
-	static const char kFirstSymbol = 'x';
-	static const char kSecondSymbol = 'o';
 
-	Game() {
-		board_ = 0L;
-		positions_[0] = kFirstPos;
-		positions_[1] = kSecondPos;
-		setpos(board_, kFirstPos.row, kFirstPos.col);
-		setpos(board_, kSecondPos.row, kSecondPos.col);
-	}
+	Game();
 
 	~Game();
 	
@@ -50,9 +44,7 @@ class Game
 	}
 
 	void Play();
-
-	/* print the game board */
-	void print();
+	void Print();
 };
 
 #endif // GAME_H_
