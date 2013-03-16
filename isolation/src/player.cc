@@ -54,9 +54,8 @@ bool MyPlayer::IsIsolated(Board board, Position my, Position her)
 		frontier.pop();
 
 		// cutoff
-		if (frontier.size() > 50000) {
+		if (frontier.size() > kMaxIsolationNodes)
 			return false;
-		}
 
 		for (int d = 0; d < 8; d++) {
 			Position next = MakeMove(node.cur, Action((Direction)d, 1));
@@ -138,10 +137,8 @@ Board TryMove(Board board, Position cur, Direction dir, unsigned int nsteps)
 		if (getpos(board, r, c)) {
 			return kInvalidBoard;
 		}
-		else {
-			setpos(nboard, r, c);
-		}
 	}
+	setpos(nboard, rend, cend);
 
 	return nboard;
 }

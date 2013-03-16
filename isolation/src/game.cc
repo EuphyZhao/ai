@@ -40,9 +40,8 @@ bool Game::DoMove(Position cur, int ro, int co, unsigned int nsteps)
 		}
 	}
 	// do move
-	for (unsigned int step = 1; step <= nsteps; step++) {
-		setpos(board_, row + ro * step, col + co * step);
-	}
+	setpos(board_, row + ro * nsteps, col + co * nsteps);
+
 	return true;
 }
 
@@ -124,9 +123,7 @@ int Game::Play()
 
 		cout << players_[mover]->name() << " moves to (" << move.row+1 << "," << move.col+1 << ")" << endl;
 
-		//		Print();
-
-		//		getchar();
+		Print();
 
 		// flip the turn
 		mover = 1 - mover;
@@ -155,6 +152,8 @@ int main(int argc, char *argv[])
 			iwin++;
 		else
 			shewin++;
+
+		getchar();
 	}
 
 	cout << iwin << ":" << shewin << endl;

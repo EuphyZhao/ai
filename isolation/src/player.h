@@ -59,7 +59,8 @@ class MyPlayer : public Player
 
 	// when kMaxDepth=0, it is equivalent to no alpha-beta
 	// but only has isolation check
-	static const int kMaxDepth = 3;
+	static const int kMaxDepth = 5;
+	static const unsigned int kMaxIsolationNodes = 100000;
 
 	bool Gameover(Board board, Position pos);
 
