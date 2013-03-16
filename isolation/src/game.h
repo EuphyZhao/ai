@@ -42,8 +42,9 @@ class Game
 	void AddSecondPlayer(Player *player) {
 		players_[1] = player;
 	}
-
-	void Play();
+	
+	// return the index of the winner
+	int Play();
 	void Print();
 };
 

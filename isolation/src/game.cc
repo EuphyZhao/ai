@@ -103,9 +103,9 @@ void Game::Gameover(int mover)
 	cout << players_[mover]->name() << " lose!" << endl;
 }
 
-void Game::Play()
+int Game::Play()
 {
-	Print();
+	//	Print();
 
 	int mover = 0;
 	while (1) {
@@ -116,16 +116,17 @@ void Game::Play()
 		// update the board; if illegal move, terminate the game
 		if (!ApplyMove(mover, move)) {
 			Gameover(mover);
-			return;
+			Print();
+			return 1-mover;
 		}
 		// update the mover's position
 		positions_[mover] = move;
 
 		cout << players_[mover]->name() << " moves to (" << move.row+1 << "," << move.col+1 << ")" << endl;
 
-		Print();
+		//		Print();
 
-		getchar();
+		//		getchar();
 
 		// flip the turn
 		mover = 1 - mover;
@@ -140,10 +141,21 @@ void Game::Print()
 
 int main(int argc, char *argv[])
 {
-	Game g;
-	Player *first = new MyPlayer("my");
-	Player *second = new DumbPlayer("dumb");
-	g.AddFirstPlayer(first);
-	g.AddSecondPlayer(second);
-	g.Play();
+	srand(time(NULL));
+
+	int iwin = 0, shewin = 0;
+	for (int i = 0; i < 10; i++) {
+		Game g;
+		Player *first = new MyPlayer("my");
+		Player *second = new DumbPlayer("dumb");
+		g.AddFirstPlayer(first);
+		g.AddSecondPlayer(second);
+		int winner = g.Play();
+		if (winner==0)
+			iwin++;
+		else
+			shewin++;
+	}
+
+	cout << iwin << ":" << shewin << endl;
 }

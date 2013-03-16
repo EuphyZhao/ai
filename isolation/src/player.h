@@ -42,9 +42,7 @@ class DumbPlayer : public Player
  private:
 	static const unsigned int kMaxAttempts = 100;
  public:
- DumbPlayer(string name) : Player(name) {
-		srand(time(NULL));
-}
+ DumbPlayer(string name) : Player(name) {}
 
 	virtual Position Move(Board board, Position my, Position her);
 
@@ -61,7 +59,7 @@ class MyPlayer : public Player
 
 	// when kMaxDepth=0, it is equivalent to no alpha-beta
 	// but only has isolation check
-	static const int kMaxDepth = 1;
+	static const int kMaxDepth = 3;
 
 	bool Gameover(Board board, Position pos);
 

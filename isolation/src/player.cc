@@ -26,9 +26,10 @@ vector<Action> GenerateActions(Board board, Position cur)
 }
 
 
+// Can we make some approximation?
 bool MyPlayer::IsIsolated(Board board, Position my, Position her)
 {
-	cout << "begin isolation." << endl;
+	//	cout << "begin isolation." << endl;
 	
 	// check the table first
 	int lookup = table_.isolated(board, my, her);
@@ -50,14 +51,18 @@ bool MyPlayer::IsIsolated(Board board, Position my, Position her)
 		BfsNode node = frontier.front();
 		if (node.depth > maxsteps)
 			maxsteps = node.depth;
-
 		frontier.pop();
+
+		// cutoff
+		if (frontier.size() > 50000) {
+			return false;
+		}
 
 		for (int d = 0; d < 8; d++) {
 			Position next = MakeMove(node.cur, Action((Direction)d, 1));
 			// we are reachable
 			if (next == her) {
-	cout << "out isolation." << endl;
+				//	cout << "out isolation." << endl;
 
 				table_.insert(board,my,her,false);
 				return false;
@@ -72,7 +77,7 @@ bool MyPlayer::IsIsolated(Board board, Position my, Position her)
 		}
 	}
 
-	cout << "out isolation." << endl;
+	//	cout << "out isolation." << endl;
 	table_.insert(board,my,her,true);
 	return true;
 }
@@ -83,8 +88,6 @@ bool MyPlayer::IsIsolated(Board board, Position my, Position her)
 // this is deterministic
 int MyPlayer::MaxClosure(Board board, Position cur)
 {
-
-	cout << "begin" << endl;
 
 	queue<BfsNode> frontier;
 	frontier.push(BfsNode(board, cur, 0));
@@ -112,8 +115,6 @@ int MyPlayer::MaxClosure(Board board, Position cur)
 			}
 		}
 	}
-
-	cout << "out" << endl;
 
 	return maxsteps;
 }
@@ -170,12 +171,6 @@ double MyPlayer::Eval(Board board, Position my, Position her)
 		return DMAX;
 
 	return 1.0 * myactions.size() / heractions.size();
-
-	// Version 2:
-	// Number of slots I can reach in two steps
-
-	// Version 3:
-	// Number of slots I can control (I will reach earlier than her)
 }
 
 
@@ -188,6 +183,7 @@ bool MyPlayer::Gameover(Board board, Position pos)
 {
 	return GenerateActions(board, pos).size() == 0;
 }
+
 int MyPlayer::DoLocalMove(Board board, Position cur)
 {
 	queue<BfsNode> frontier;
@@ -228,7 +224,7 @@ int MyPlayer::DoLocalMove(Board board, Position cur)
 // Find the next best local move
 Position MyPlayer::LocalMove(Board board, Position my)
 {
-	cout << "Local move start" << endl;
+	//	cout << "Local move start" << endl;
 	Position best = Position(-1,-1);
 	int maxsteps = 0;
 	for (int d = 0; d < 8; d++) {
@@ -236,16 +232,17 @@ Position MyPlayer::LocalMove(Board board, Position my)
 		Board nboard=TryMove(board, my, (Direction)d, 1);
 		if (nboard) {
 			int steps = DoLocalMove(nboard, next);
-			if (steps > hersteps_) {
+			if (steps >= maxsteps) {
 				maxsteps = steps;
 				best = next;
-				break;
+				if (steps > hersteps_) // we only need to do better than her
+					break;
 			}
 		}
 	}
 	mysteps_ = maxsteps - 1; // may be lower
 	hersteps_--;
-	cout << "Local move end" << endl;
+	//	cout << "Local move end" << endl;
 	return best;
 }
 
@@ -258,26 +255,6 @@ Position MyPlayer::AlphaBeta(Board board, Position my, Position her)
 
 	ScoreAction sa = MaxValue(board, my, her, alpha, beta, 0);
 
-	// We will win because we have reached a
-	// Good Isolation
-	// Pick best move
-	// if (sa.score == DMAX) {
-	// 	isolated_ = true;
-	// 	cout << "I will win! Switching to local mode" << endl;
-	// 	return LocalMove(board, my);
-	// }
-
-	// We will lose because we reached a 
-	// Bad Isolation
-	// But try out best, hopefully the opponent will make
-	// a mistake
-	// else if (sa.score == DMIN) {
-	// 	isolated_ = true;
-	// 	cout << "I will lose! Switching to local mode" << endl;
-	// 	return LocalMove(board, my);
-	// }
-	
-	
 	if (TryMove(board, my, sa.action.dir, sa.action.steps)) {
 		return MakeMove(my, sa.action);
 	}
@@ -300,16 +277,16 @@ ScoreAction MyPlayer::MaxValue(Board board, Position my, Position her,
 	}
 
 	// Isolation test
-	if (IsIsolated(board, my, her)) {
-		int mysteps = MaxClosure(board, my);
-		int hersteps = MaxClosure(board, her);
-		cout << mysteps << ":" << hersteps << endl;
+	// if (IsIsolated(board, my, her)) {
+	// 	int mysteps = MaxClosure(board, my);
+	// 	int hersteps = MaxClosure(board, her);
+	// 	cout << mysteps << ":" << hersteps << endl;
 
-		if (mysteps > hersteps)
-			return ScoreAction(DMAX, kInvalidAction);
-		else
-			return ScoreAction(DMIN, kInvalidAction);
-	}
+	// 	if (mysteps > hersteps)
+	// 		return ScoreAction(DMAX, kInvalidAction);
+	// 	else
+	// 		return ScoreAction(DMIN, kInvalidAction);
+	// }
 
 	// Cutoff test
 	if (Cutoff(board, my, her, depth))
@@ -356,14 +333,14 @@ ScoreAction MyPlayer::MinValue(Board board, Position my, Position her,
 	}
 
 	// Isolation test
-	if (IsIsolated(board, my, her)) {
-		int mysteps = MaxClosure(board, my);
-		int hersteps = MaxClosure(board, her);
-		if (mysteps >= hersteps)
-			return ScoreAction(DMAX, kInvalidAction);
-		else
-			return ScoreAction(DMIN, kInvalidAction);
-	}
+	// if (IsIsolated(board, my, her)) {
+	// 	int mysteps = MaxClosure(board, my);
+	// 	int hersteps = MaxClosure(board, her);
+	// 	if (mysteps >= hersteps)
+	// 		return ScoreAction(DMAX, kInvalidAction);
+	// 	else
+	// 		return ScoreAction(DMIN, kInvalidAction);
+	// }
 
 	// Cutoff test
 	if (Cutoff(board, my, her, depth))
@@ -402,7 +379,12 @@ Position MyPlayer::Move(Board board, Position my, Position her)
 		return LocalMove(board, my);
 	else { // otherwise, adversial game!
 		// check isolation
-		if (IsIsolated(board, my, her)) {
+
+		cout << "test isolation..." << endl;
+		bool test = IsIsolated(board, my, her);
+		cout << "test finished..." << test << endl;
+		if (test) {
+			cout << "Switching to local mode." << endl;
 			isolated_ = true;
 			hersteps_ = MaxClosure(board, her);
 			return LocalMove(board, my);

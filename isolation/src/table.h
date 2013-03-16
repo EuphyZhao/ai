@@ -41,8 +41,11 @@ class Table
 {
  private:
 	set<Entry, EntryCompare> table_;
+	int hits_;
 	
  public:
+ Table() : hits_(0) {}
+		
 
 	// check if current entry has exists
 	// return 0, if not exists
@@ -53,6 +56,10 @@ class Table
 		if (it == table_.end())
 			return 0;
 
+		hits_++;
+		if (hits_ % 10000 == 0)
+			cout << "hits:" << hits_ << endl;
+
 		Entry e = *it;
 		if (e.isolated)
 			return 1;
@@ -62,6 +69,9 @@ class Table
 
 	void insert(Board board, Position my, Position her, bool isolated) {
 		table_.insert(Entry(board, my, her, isolated));
+		if (table_.size() % 10000 == 0)
+			cout << "Table size:" << table_.size() << endl;
+
 	}
 
 	int size() { return table_.size();}
