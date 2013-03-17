@@ -13,24 +13,9 @@
 
 using namespace std;
 
-vector<Action> GenerateActions(Board board, Position cur)
-{
-	vector<Action> actions;
-	for (int d = 0; d < 8; d++)
-		for (int steps = 1; steps < kBoardSize; steps++) 
-			if (TryMove(board, cur, (Direction)d, steps))
-				actions.push_back(Action((Direction)d, steps));
-			else
-				break;
-	return actions;
-}
 
-
-// Can we make some approximation?
 bool MyPlayer::IsIsolated(Board board, Position my, Position her)
 {
-	//	cout << "begin isolation." << endl;
-	
 	// check the table first
 	int lookup = table_.isolated(board, my, her);
 
@@ -61,8 +46,6 @@ bool MyPlayer::IsIsolated(Board board, Position my, Position her)
 			Position next = MakeMove(node.cur, Action((Direction)d, 1));
 			// we are reachable
 			if (next == her) {
-				//	cout << "out isolation." << endl;
-
 				table_.insert(board,my,her,false);
 				return false;
 			}
@@ -76,7 +59,6 @@ bool MyPlayer::IsIsolated(Board board, Position my, Position her)
 		}
 	}
 
-	//	cout << "out isolation." << endl;
 	table_.insert(board,my,her,true);
 	return true;
 }
@@ -176,10 +158,6 @@ bool MyPlayer::Cutoff(Board board, Position my, Position her, int depth)
 	return (depth > kMaxDepth);
 }
 
-bool MyPlayer::Gameover(Board board, Position pos)
-{
-	return GenerateActions(board, pos).size() == 0;
-}
 
 int MyPlayer::DoLocalMove(Board board, Position cur)
 {
@@ -264,11 +242,11 @@ ScoreAction MyPlayer::MaxValue(Board board, Position my, Position her,
 							   double alpha, double beta, int depth)
 {
 	// I lose
-	if (Gameover(board, my))
+	if (IsDead(board, my))
 		return ScoreAction(DMIN, kInvalidAction);
 
 	// She lose
-	if (Gameover(board, her)) {
+	if (IsDead(board, her)) {
 		vector<Action> actions = GenerateActions(board, my);
 		return ScoreAction(DMAX, actions[0]);
 	}
@@ -320,11 +298,11 @@ ScoreAction MyPlayer::MinValue(Board board, Position my, Position her,
 							   double alpha, double beta, int depth)
 {
 	// She lose
-	if (Gameover(board, her))
+	if (IsDead(board, her))
 		return ScoreAction(DMAX, kInvalidAction);
 
 	// I lose
-	if (Gameover(board, my)) {
+	if (IsDead(board, my)) {
 		vector<Action> actions = GenerateActions(board, her);
 		return ScoreAction(DMIN, actions[0]);
 	}
@@ -391,24 +369,3 @@ Position MyPlayer::Move(Board board, Position my, Position her)
 	}
 }
 
-
-Position HumanPlayer::Move(Board board, Position my, Position her)
-{
-	int row, col;
-	cout << ">>";
-	cin >> row;
-	cin >> col;
-	return Position(row-1, col-1);
-}
-
-Position DumbPlayer::Move(Board board, Position my, Position her)
-{
-	vector<Action> actions = GenerateActions(board, my);
-	if (actions.empty()) {
-		return Position(-1, -1);
-	}
-	else {
-		Action action = actions[rand() % actions.size()];
-		return MakeMove(my, action);
-	}
-}

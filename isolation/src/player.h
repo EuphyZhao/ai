@@ -28,27 +28,6 @@ class Player
 };
 
 
-class HumanPlayer : public Player
-{
- public:
- HumanPlayer(string name) : Player(name) {}
-
-	virtual Position Move(Board board, Position my, Position her);
-
-};
-
-class DumbPlayer : public Player
-{
- private:
-	static const unsigned int kMaxAttempts = 100;
- public:
- DumbPlayer(string name) : Player(name) {}
-
-	virtual Position Move(Board board, Position my, Position her);
-
-};
-
-
 class MyPlayer : public Player
 {
  private:
@@ -61,8 +40,6 @@ class MyPlayer : public Player
 	// but only has isolation check
 	static const int kMaxDepth = 5;
 	static const unsigned int kMaxIsolationNodes = 100000;
-
-	bool Gameover(Board board, Position pos);
 
 	double Eval(Board board, Position my, Position her);
 	bool Cutoff(Board board, Position my, Position her, int depth);
@@ -97,7 +74,6 @@ class MyPlayer : public Player
 Board TryMove(Board board, Position cur, Direction dir, unsigned int nsteps);
 Position MakeMove(Position cur, Action action);
 
-vector<Action> GenerateActions(Board board, Position cur);
 
 
 #endif // PLAYER_H_

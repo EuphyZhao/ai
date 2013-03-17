@@ -8,6 +8,7 @@
 
 #include "game.h"
 #include "player.h"
+#include "dumb.h"
 #include "util.h"
 
 using namespace std;
@@ -30,44 +31,35 @@ Game::~Game()
 	}
 }
 
-bool Game::DoMove(Position cur, int ro, int co, unsigned int nsteps)
-{
-	int row = cur.row, col = cur.col;
-	// validate
-	for (unsigned int step = 1; step <= nsteps; step++) {
-		if (getpos(board_, row + ro * step, col + co * step)) {
-			return false;
-		}
-	}
-	// do move
-	setpos(board_, row + ro * nsteps, col + co * nsteps);
 
-	return true;
+bool IsDead(Board board, Position pos)
+{
+	return GenerateActions(board, pos).size() == 0;
 }
 
-bool Game::ApplyMove(int mover, Position move)
+
+bool ValidateMove(Board board, Position current, Position move)
 {
-	// check if loses
 	if (move.row == -1 && move.col == -1) {
-		cout << players_[mover]->name() << " has no way to go." << endl;
+		cout << "no way to go." << endl;
 		return false;
 	}
 
 	// check if moves out of the board
 	if (move.row < 0 || move.col < 0 ||
 		move.row >= kBoardSize || move.col >= kBoardSize) {
-		cout << players_[mover]->name() << " moves out of the board." << endl;
+		cout << "moves out of the board." << endl;
 		return false;
 	}
 
 	// check if stay
-	if (move == positions_[mover]) {
-		cout << players_[mover]->name() << " did not move." << endl;
+	if (move == current) {
+		cout << "did not move." << endl;
 		return false;
 	}
 
-	Position current = positions_[mover];
-	int ro, co, nsteps;
+	int ro, co;
+	unsigned int nsteps;
 
 	if (current.row == move.row) { // horizontal move
 		ro = 0;
@@ -86,15 +78,36 @@ bool Game::ApplyMove(int mover, Position move)
 		nsteps = abs(current.row-move.row);
 	}
 	else {
-		cout << players_[mover]->name() << " move into a wrong direction." << endl;
+		cout << "move into a wrong direction." << endl;
 		return false;
 	}
-	if (DoMove(current, ro, co, nsteps))
-		return true;
-	else {
-		cout << players_[mover]->name() << " jumps over a occupied square" << endl;
-		return false;
+
+	for (unsigned int step = 1; step <= nsteps; step++) {
+		if (getpos(board, current.row + ro * step, current.col + co * step)) {
+			cout << "jumps over a occupied square" << endl;
+			return false;
+		}
 	}
+	return true;
+}
+
+vector<Action> GenerateActions(Board board, Position cur)
+{
+	vector<Action> actions;
+	for (int d = 0; d < 8; d++)
+		for (int steps = 1; steps < kBoardSize; steps++) 
+			if (TryMove(board, cur, (Direction)d, steps))
+				actions.push_back(Action((Direction)d, steps));
+			else
+				break;
+	return actions;
+}
+
+
+void Game::ApplyMove(int mover, Position move)
+{
+	setpos(board_, move.row, move.col);
+	positions_[mover] = move;
 }
 
 void Game::Gameover(int mover)
@@ -112,14 +125,15 @@ int Game::Play()
 		Position herpos = positions_[1-mover];
 		Position move = players_[mover]->Move(board_, yourpos, herpos);
 
-		// update the board; if illegal move, terminate the game
-		if (!ApplyMove(mover, move)) {
+		// Validate
+		if (!ValidateMove(board_,positions_[mover], move)) {
 			Gameover(mover);
 			Print();
-			return 1-mover;
+			return 1 - mover;
 		}
-		// update the mover's position
-		positions_[mover] = move;
+
+		// update the board
+		ApplyMove(mover, move);
 
 		cout << players_[mover]->name() << " moves to (" << move.row+1 << "," << move.col+1 << ")" << endl;
 
@@ -145,8 +159,8 @@ int main(int argc, char *argv[])
 		Game g;
 		Player *first = new MyPlayer("my");
 		Player *second = new DumbPlayer("dumb");
-		g.AddFirstPlayer(first);
-		g.AddSecondPlayer(second);
+		g.AddFirstPlayer(second);
+		g.AddSecondPlayer(first);
 		int winner = g.Play();
 		if (winner==0)
 			iwin++;
