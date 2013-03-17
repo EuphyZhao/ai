@@ -1,0 +1,41 @@
+COMS W4701 Artifical Intelligence
+Project 3 - Isolation
+
+1. Compile
+
+   make
+
+2. Run
+
+   ./game
+
+3. Algorithms
+
+- Adversarial Mode
+In adversarial mode, we use the classic alpha-beta search algorithm.
+
+- Cutoff condition
+
+- Evaluation function
+
+
+- Local Mode
+After two players are isolated (see next section to find out how to detect isolation), it is no longer an adversarial game, so we don't need alpha-beta search anymore. We can search for our own optimal solution.
+
+The problem of finding the maximum number of steps we can live can be modeled as a similar problem of the classic NP-hard problem, the Hamilton path problem. Suppose we want to answer if it is possible for us to visit every square in the isolated area, it is equivalent to answering whether it is possible to visit every node in a graph exactly once. And this problem is NP-hard.
+
+I use BFS to search for the optimal solution. But since our goal is to beat the opponent, we don't necessarily have to find 'THE' optimal solution. We only need to do better than our opponent. So I add a pruning condition to early terminate the BFS search once we have found a path that can make us live longer than our opponent.
+
+
+- Isolation detection
+To detect whether two players are isolated is equivalent to a reachability query on a dynamic graph. We need to verify whether there is a path from point A to point B, but the graph is changing because we mark the intermediate nodes along the path as occupied. Conventional reachability algorithm based on shortest path does not apply here. I think the problem is NP-hard according to my knowledgeable guess.
+
+Although isolation detection is a hard problem, it is critical to winning the game. I use BFS with cutoff to implement isolation detection. I start from one player and enumerate all possible paths to check if it can reach another players. After we search for the max number of paths allowed, we terminate the search and assume these two players are reachable. The cutoff is to prevent the worst case scenarios. Although the cutoff makes our algorithm an approximation algorithm, it does not impair our algorithm too much. Reaching the cutoff implies that there are a lot of paths available. Even though we are indeed isolated, we can detect it and switch to local mode in later steps without stucking ourselves.
+
+
+3. Game environment
+- Simulator
+
+- Human player & dumb player
+
+4. Test
