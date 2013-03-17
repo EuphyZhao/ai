@@ -7,35 +7,52 @@ Project 3 - Isolation
 
 2. Run
 
-   ./game
+   ./test
 
 3. Algorithms
+The isolation game is actually composed of two subproblems. The watershed between these two games is the 'Isolation state'. Two players are isolated if there is no path from one player to the other. Isolation state implies two players have no interference with other. Before the isolation state, the game is a adversarial game playing problem. After we reach the isolation state, it is equivalent to find an optimal solution of a classic NP-hard problem (see next sections).
+
+- Local Mode
+After two players are isolated (how to detect isolation is introduced later), we are no longer playing an adversarial game, so we don't need alpha-beta search anymore. We can search for our own optimal solution.
+
+The problem of finding the maximum number of steps we can live is similar to the classic NP-hard problem, the Hamilton path problem. Suppose we want to answer if it is possible for us to visit every square in the isolated area, it is equivalent to answering whether it is possible to visit every node in a graph exactly once. This problem is NP-hard.
+
+I use BFS to search for the optimal solution. But since our goal is to beat the opponent, we don't need to find 'THE' global optimal solution. We only need to do better than our opponent. So I add a pruning condition to early terminate the BFS search once we have found a solution that can make us stay longer than our opponent.
+
+
+- Isolation detection
+To detect whether two players are isolated is equivalent to a reachability query on a dynamic graph. We need to verify whether there is a path from point A to point B, but the graph is evolving as we occupy the intermediate nodes along the path. Conventional reachability algorithm based on shortest path does not apply here. I think the problem is also NP-hard according to my knowledgeable guess.
+
+Although isolation detection is a hard problem, it is critical to winning the game. I use BFS with cutoff (maximum number of nodes visited) to implement isolation detection. I start from one player and enumerate all possible paths to check if we can reach the other players. After we search for the cutoff, we terminate the search and assume these two players are reachable. The cutoff is to prevent the worst case scenarios. Although the cutoff makes our algorithm comes out with an approximation answer, it does not impair our player too much. Reaching the cutoff implies that there are a lot of paths available. Even though we are indeed isolated, we can detect it and switch to local mode in later steps without stucking ourselves.
 
 - Adversarial Mode
 In adversarial mode, we use the classic alpha-beta search algorithm.
 
 - Cutoff condition
+Maximum depth is used as the cutoff condition.
 
 - Evaluation function
+The evaluation function is not very critical in this game. When the two players have not been isolated yet, the spaces and obstacles are equal to both players. What is more important is to estimate how close are we to the isolation state and how likely that we can live longer than the opponent once we are isolated. But as we have shown, detection of isolation and computation of max steps to live is extremely computational expensive.
 
+Thus, I choose a fairly simple but effective evaluation function, namely the available actions I can take from that state.
 
-- Local Mode
-After two players are isolated (see next section to find out how to detect isolation), it is no longer an adversarial game, so we don't need alpha-beta search anymore. We can search for our own optimal solution.
-
-The problem of finding the maximum number of steps we can live can be modeled as a similar problem of the classic NP-hard problem, the Hamilton path problem. Suppose we want to answer if it is possible for us to visit every square in the isolated area, it is equivalent to answering whether it is possible to visit every node in a graph exactly once. And this problem is NP-hard.
-
-I use BFS to search for the optimal solution. But since our goal is to beat the opponent, we don't necessarily have to find 'THE' optimal solution. We only need to do better than our opponent. So I add a pruning condition to early terminate the BFS search once we have found a path that can make us live longer than our opponent.
-
-
-- Isolation detection
-To detect whether two players are isolated is equivalent to a reachability query on a dynamic graph. We need to verify whether there is a path from point A to point B, but the graph is changing because we mark the intermediate nodes along the path as occupied. Conventional reachability algorithm based on shortest path does not apply here. I think the problem is NP-hard according to my knowledgeable guess.
-
-Although isolation detection is a hard problem, it is critical to winning the game. I use BFS with cutoff to implement isolation detection. I start from one player and enumerate all possible paths to check if it can reach another players. After we search for the max number of paths allowed, we terminate the search and assume these two players are reachable. The cutoff is to prevent the worst case scenarios. Although the cutoff makes our algorithm an approximation algorithm, it does not impair our algorithm too much. Reaching the cutoff implies that there are a lot of paths available. Even though we are indeed isolated, we can detect it and switch to local mode in later steps without stucking ourselves.
-
-
-3. Game environment
+4. Game environment
 - Simulator
+In 'game.h+game.cc', I implemented a simulator of the isolation game. After specifying the two players, we can start the game, and the game will call the Move function of the two players in turn.
+
+- The Player interface
+All players must inherit from the Player interface which has to have a name and a Move function. Our simulator can 
 
 - Human player & dumb player
+For test purpose, I've implemented two simple players. The HumanPlayer is for human beings to compete with the machine, if you want to prove your brain (I tried to compete with my player, but failed in most of the time). The DumbPlayer makes move randomly.
 
-4. Test
+5. Implementation details
+
+- Language choice
+I choose C++ for its space and time efficiency. Advanced functionality, e.g. parallel searching, memory-constraint transposition table.
+
+- State representation
+I represent the state of a board as a 64-bit unsigned long, which is the most compact representation of this game. All auxilary types, e.g. Position, Action, etc are represented as structure of primitive types. No pointer is used. Such representation allows us to pass the argument on the stack which is much more efficient than heap-allocated objects.
+
+- Tranposition table
+Isolation test is an expensive operation. So I create a tranposition table to cache the test result of the states I have seen before.

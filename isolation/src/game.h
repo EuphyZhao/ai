@@ -42,7 +42,7 @@ class Game
 	Game();
 
 	~Game();
-	
+
 	void AddFirstPlayer(Player *player) {
 		players_[0] = player;
 	}

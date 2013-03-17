@@ -154,21 +154,19 @@ int main(int argc, char *argv[])
 {
 	srand(time(NULL));
 
-	int iwin = 0, shewin = 0;
-	for (int i = 0; i < 10; i++) {
+	int firstwin = 0, secondwin = 0;
+	for (int i = 0; i < 20; i++) {
 		Game g;
-		Player *first = new MyPlayer("my");
-		Player *second = new DumbPlayer("dumb");
+		Player *first = new MyPlayer("my simple", 3);
+		Player *second = new MyPlayer("my advanced", 5);
 		g.AddFirstPlayer(second);
 		g.AddSecondPlayer(first);
 		int winner = g.Play();
 		if (winner==0)
-			iwin++;
+			firstwin++;
 		else
-			shewin++;
-
-		getchar();
+			secondwin++;
 	}
 
-	cout << iwin << ":" << shewin << endl;
+	cout <<  firstwin << ":" << secondwin << endl;
 }

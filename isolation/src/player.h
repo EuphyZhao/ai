@@ -1,10 +1,12 @@
 #ifndef PLAYER_H_
 #define PLAYER_H_
 
+#include <cassert>
 #include <iostream>
 #include <vector>
 #include <queue>
 #include <stdlib.h>
+
 #include "game.h"
 #include "types.h"
 #include "table.h"
@@ -31,15 +33,10 @@ class Player
 class MyPlayer : public Player
 {
  private:
-
-	// I want to evaluate when she is taking the move
-	// otherwise I can go one step further
-	// so set max depth to an even number
-
-	// when kMaxDepth=0, it is equivalent to no alpha-beta
-	// but only has isolation check
-	static const int kMaxDepth = 5;
+	static const int kDefaultMaxDepth = 5;
 	static const unsigned int kMaxIsolationNodes = 100000;
+	
+	int kMaxDepth;
 
 	double Eval(Board board, Position my, Position her);
 	bool Cutoff(Board board, Position my, Position her, int depth);
@@ -60,11 +57,15 @@ class MyPlayer : public Player
 	Table table_;
 
 	bool isolated_;
-	int mysteps_;
 	int hersteps_;
 
  public:
- MyPlayer(string name) : Player(name), isolated_(false) {}
+ MyPlayer(string name) : Player(name), kMaxDepth(kDefaultMaxDepth), isolated_(false), hersteps_(IMAX) {}
+
+ MyPlayer(string name, int maxDepth) : Player(name), kMaxDepth(maxDepth), isolated_(false), hersteps_(IMAX)
+	{
+		assert(maxDepth % 2 != 0);
+	}
 
 	virtual Position Move(Board board, Position my, Position her);
 
@@ -73,7 +74,7 @@ class MyPlayer : public Player
 
 Board TryMove(Board board, Position cur, Direction dir, unsigned int nsteps);
 Position MakeMove(Position cur, Action action);
-
+Position RandomMove(Board board, Position current);
 
 
 #endif // PLAYER_H_

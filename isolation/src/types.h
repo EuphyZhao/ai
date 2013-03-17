@@ -5,6 +5,9 @@
 
 const double DMIN = std::numeric_limits<double>::min();
 const double DMAX = std::numeric_limits<double>::max();
+const double IMIN = std::numeric_limits<int>::min();
+const double IMAX = std::numeric_limits<int>::max();
+
 
 struct Position
 {
@@ -22,8 +25,6 @@ enum Direction {
 	INVALID_DIR
 };
 
-
-//extern const int kOffsets[8][2];
 
 struct Action
 {
@@ -61,7 +62,7 @@ struct BfsNode
 	Board board;
 	Position cur;
 	
-	int depth; // used in max closure
+	int depth;
 
 BfsNode(Board b, Position pos) : board(b), cur(pos) {}	
 

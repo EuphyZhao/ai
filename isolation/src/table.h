@@ -2,6 +2,7 @@
 #define TABLE_H_
 
 #include <set>
+#include <map>
 #include "types.h"
 #include "game.h"
 
@@ -13,13 +14,17 @@ struct Entry
 	Position my;
 	Position her;
 	int depth;
+    int isolated; // 0 if unknown, 1 if isolated, -1 if not
 	double score;
-	bool isolated;
 
-Entry(Board b, Position m, Position h, bool i) : 
-	board(b), my(m), her(h), isolated(i)
-{}	
+Entry(Board b, Position m, Position h) : 
+	board(b), my(m), her(h), isolated(0) {}	
 
+Entry(Board b, Position m, Position h, int i) : 
+	board(b), my(m), her(h), isolated(i) {}	
+
+Entry(Board b, Position m, Position h, double s) : 
+	board(b), my(m), her(h), isolated(0), score(s) {}	
 };
 
 struct EntryCompare {
@@ -33,7 +38,6 @@ struct EntryCompare {
 	}
 };
 
-
 /*
  * Tranposition table
  */
@@ -46,14 +50,16 @@ class Table
  public:
  Table() : hits_(0) {}
 		
-
 	// check if current entry has exists
-	// return 0, if not exists
+	// return 0, if unknown
 	// return 1, if isolated
 	// return -1 if not isolated
 	int isolated(Board board, Position my, Position her) {
 		set<Entry>::iterator it = table_.find(Entry(board,my,her,true));
-		if (it == table_.end())
+		
+		// if entry does not exists
+		// or if isolation test is not done
+		if (it == table_.end() || it->isolated == 0)
 			return 0;
 
 		hits_++;
@@ -68,13 +74,37 @@ class Table
 	}
 
 	void insert(Board board, Position my, Position her, bool isolated) {
-		table_.insert(Entry(board, my, her, isolated));
+		int i = isolated ? 1 : -1;
+		table_.insert(Entry(board, my, her, i));
 		if (table_.size() % 10000 == 0)
 			cout << "Table size:" << table_.size() << endl;
 
 	}
 
-	int size() { return table_.size();}
+	double LookupScore(Board board, Position my, Position her) {
+		set<Entry>::iterator it = table_.find(Entry(board,my,her));
+		
+		// if entry does not exists
+		// or if the isolation test is done
+		if (it == table_.end() || it->isolated)
+			return 0;
+
+		hits_++;
+		if (hits_ % 10000 == 0)
+			cout << "hits:" << hits_ << endl;
+
+		return it->score;
+	}
+
+
+	void InsertScore(Board board, Position my, Position her, double score) {
+		table_.insert(Entry(board, my, her, score));
+		if (table_.size() % 10000 == 0)
+			cout << "Table size:" << table_.size() << endl;
+	}
+
+
+	unsigned int size() { return table_.size();}
 };
 
 #endif // TABLE_H_
