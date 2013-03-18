@@ -1,0 +1,7 @@
+* Increase the search depth in later games, because the fanout is lower
+
+* When waiting for the opponent to respond, searching in the background
+
+* Eagerly chase other player to make them isolated by utilizing the caching result of isolation test or other heuristics to approximate isolation
+
+* Use DFS instead of BFS to calculate available steps

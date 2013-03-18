@@ -9,6 +9,7 @@
 #include "game.h"
 #include "player.h"
 #include "dumb.h"
+#include "human.h"
 #include "util.h"
 
 using namespace std;
@@ -155,18 +156,18 @@ int main(int argc, char *argv[])
 	srand(time(NULL));
 
 	int firstwin = 0, secondwin = 0;
-	for (int i = 0; i < 20; i++) {
+	//	for (int i = 0; i < 20; i++) {
 		Game g;
-		Player *first = new MyPlayer("my simple", 3);
-		Player *second = new MyPlayer("my advanced", 5);
-		g.AddFirstPlayer(second);
-		g.AddSecondPlayer(first);
+		Player *first = new HumanPlayer("Aiting Wang");
+		Player *second = new MyPlayer("Jacky", 5);
+		g.AddFirstPlayer(first);
+		g.AddSecondPlayer(second);
 		int winner = g.Play();
 		if (winner==0)
 			firstwin++;
 		else
 			secondwin++;
-	}
+		//	}
 
-	cout <<  firstwin << ":" << secondwin << endl;
+//	cout <<  firstwin << ":" << secondwin << endl;
 }

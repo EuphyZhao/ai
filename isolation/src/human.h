@@ -22,9 +22,9 @@ class HumanPlayer : public Player
 		cout << ">>";
 		cin >> row;
 		cin >> col;
-
+		
 		// Validate the move
-		while (!ValidateMove(board, my, Position(row, col))) {
+		while (!ValidateMove(board, my, Position(row-1, col-1))) {
 			cout << "Invalid move, please try again." << endl;
 			cout << ">>";
 			cin >> row;
