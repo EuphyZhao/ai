@@ -1,12 +1,23 @@
 #ifndef HUMAN_H_
 #define HUMAN_H_
 
+#include <sstream>
 #include "game.h"
 #include "types.h"
 #include "player.h"
 
 class HumanPlayer : public Player
 {
+ private:
+	bool parse_string(string str, int *row, int *col) {
+		istringstream iss(str);
+		iss >> *row >> *col >> std::ws;
+		if (iss.fail() || !iss.eof())
+			return false;
+		else
+			return true;
+	}
+
  public:
  HumanPlayer(string name) : Player(name) {}
 
@@ -20,15 +31,15 @@ class HumanPlayer : public Player
 
 		int row, col;
 		cout << ">>";
-		cin >> row;
-		cin >> col;
-		
+
+		string str;
+		getline(cin, str);
+
 		// Validate the move
-		while (!ValidateMove(board, my, Position(row-1, col-1))) {
+		while (!parse_string(str, &row, &col) || !ValidateMove(board, my, Position(row-1, col-1))) {
 			cout << "Invalid move, please try again." << endl;
 			cout << ">>";
-			cin >> row;
-			cin >> col;
+			getline(cin, str);
 		}
 		return Position(row-1, col-1);
 	}

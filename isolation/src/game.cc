@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <queue>
 #include <set>
+#include <sstream>
 #include <iostream>
 
 #include "game.h"
@@ -118,7 +119,7 @@ void Game::Gameover(int mover)
 
 int Game::Play()
 {
-	//	Print();
+	Print();
 
 	int mover = 0;
 	while (1) {
@@ -155,19 +156,29 @@ int main(int argc, char *argv[])
 {
 	srand(time(NULL));
 
-	int firstwin = 0, secondwin = 0;
-	//	for (int i = 0; i < 20; i++) {
-		Game g;
-		Player *first = new HumanPlayer("Aiting Wang");
-		Player *second = new MyPlayer("Jacky", 5);
-		g.AddFirstPlayer(first);
-		g.AddSecondPlayer(second);
-		int winner = g.Play();
-		if (winner==0)
-			firstwin++;
+	string str;
+	int fp = -1;
+	do {
+		cout << "Input the first player: (0) Human (1) Jacky" << endl;
+		getline(cin, str);
+		istringstream iss(str);
+		iss >> fp >> std::ws;
+		if (iss.fail() || !iss.eof())
+			cout << "Please input 0 / 1." << endl;
 		else
-			secondwin++;
-		//	}
-
-//	cout <<  firstwin << ":" << secondwin << endl;
+			break;
+	} while (1);
+	
+	Game g;
+	Player *human = new HumanPlayer("Aiting Wang");
+	Player *jacky = new MyPlayer("Jacky", 5);
+	if (fp == 0) {
+		g.AddFirstPlayer(human);
+		g.AddSecondPlayer(jacky);
+	}
+	else {
+		g.AddFirstPlayer(jacky);
+		g.AddSecondPlayer(human);
+	}
+	g.Play();
 }
