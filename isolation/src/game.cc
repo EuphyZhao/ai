@@ -1,3 +1,5 @@
+//#define TEST
+
 #include <cassert>
 #include <cmath>
 #include <stdio.h>
@@ -9,6 +11,7 @@
 
 #include "game.h"
 #include "player.h"
+#include "nplayer.h"
 #include "dumb.h"
 #include "human.h"
 #include "util.h"
@@ -156,29 +159,79 @@ int main(int argc, char *argv[])
 {
 	srand(time(NULL));
 
-	string str;
+#ifndef TEST
+	Game g;
+	Player *player1;
+	Player *player2;
+	
+	string name1;
+	string name2;
 	int fp = -1;
+	string yn;
+	string str;
+
+	cout << "Input player1 name: ";
+	getline(cin, name1);
+	cout << name1 << " joins the game." << endl;
+
+	cout << "Input player2 name: ";
+	getline(cin, name2);
+	cout << name2 << " joins the game." << endl;
+
 	do {
-		cout << "Input the first player: (0) Human (1) Jacky" << endl;
+		cout << name1 << " is robot? (Y/N)";
+		getline(cin, yn);
+	} while (yn[0] != 'Y' && yn[0] != 'N');
+
+	if (yn[0] == 'Y')
+		player1 = new AggressivePlayer(name1);
+	else
+		player1 = new HumanPlayer(name1);
+
+	do {
+		cout << name2 << " is robot? (Y/N)";
+		getline(cin, yn);
+	} while (yn[0] != 'Y' && yn[0] != 'N');
+
+	if (yn[0] == 'Y')
+		player2 = new AggressivePlayer(name2);
+	else
+		player2 = new HumanPlayer(name2);
+
+	do {
+		cout << "Who starts first? (1/2):";
 		getline(cin, str);
 		istringstream iss(str);
 		iss >> fp >> std::ws;
 		if (iss.fail() || !iss.eof())
-			cout << "Please input 0 / 1." << endl;
+			cout << "Please input (1/2)." << endl;
 		else
 			break;
 	} while (1);
-	
-	Game g;
-	Player *human = new HumanPlayer("Aiting Wang");
-	Player *jacky = new MyPlayer("Jacky", 5);
-	if (fp == 0) {
-		g.AddFirstPlayer(human);
-		g.AddSecondPlayer(jacky);
+
+	if (fp == 1) {
+		g.AddFirstPlayer(player1);
+		g.AddSecondPlayer(player2);
 	}
 	else {
-		g.AddFirstPlayer(jacky);
-		g.AddSecondPlayer(human);
+		g.AddFirstPlayer(player2);
+		g.AddSecondPlayer(player1);
 	}
 	g.Play();
+#else
+	int wins = 0;
+	for (int i = 0; i < 20; i++) {
+		Game g;
+		Player *dumb = new MyPlayer("dumb");
+		Player *aggressive = new AggressivePlayer("aggressive");
+		g.AddFirstPlayer(dumb);
+		g.AddSecondPlayer(aggressive);
+		int winner = g.Play();
+		wins += winner;
+
+		cout << wins << "/" << i+1 << endl;
+
+	}
+	cout << wins << endl;
+#endif
 }

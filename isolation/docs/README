@@ -36,6 +36,13 @@ The evaluation function is not very critical in this game. When the two players 
 
 Thus, I choose a fairly simple but effective evaluation function, namely the available actions I can take from that state.
 
+- Adaptive searching depth
+As we are in the middle or close to the end of the game, the branching factor becomes smaller. However, each step we take now will have a significant impact on the result. So I adaptively increase the searching depth.
+
+- Aggressive mode
+At first, isolation detection is only used to check current step. In a new player 'nplayer.h', I make my player more aggressive, namely actively create the isolation state if we can go more steps than our opponent. By adding an additional at the first few depths of alpha-beta search, the player has the ability to look ahead, like how human is playing the game.
+
+
 4. Game environment
 - Simulator
 In 'game.h+game.cc', I implemented a simulator of the isolation game. After specifying the two players, we can start the game, and the game will call the Move function of the two players in turn.
