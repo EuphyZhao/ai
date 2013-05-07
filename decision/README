@@ -1,0 +1,78 @@
+COMS W4701 Aritifical Intelligence
+Homework 4: Decision tree learning
+
+Author: Jiacheng Yang
+UNI: jy2522
+
+1. How to compile
+   NULL
+
+2. How to run the code
+   - To learn the decision tree:
+   python learn.py <training_file> <classifier_file>
+
+   After learning the decision tree, a procedure to classify new data
+   is written in <classifier_file>.
+
+   - To test the decision tree:
+   python <classifier_file> <test_file>
+
+   - Sample input/output   
+   python learn.py restaurant2_train.csv classify.py
+
+   python classify.py restaurant2_test.csv
+   '''   
+   Classifying: ['Some', 'Nope', 'Yeah', 'Nope', '$$', 'Yeah', 'French', '10-30']
+   --> Yes
+   Classifying: ['None', 'Yeah', 'Yeah', 'Nope', '$$$', 'Yeah', 'Burger', '>60']
+   --> No
+   Classifying: ['Full', 'Yeah', 'Yeah', 'Yeah', '$$$', 'Yeah', 'Italian', '>60']
+   --> Maybe
+   '''
+
+3. How it works
+   We implemented the decision learning in the textbook with small
+   variations to handle multi-class classification.
+
+   The following are some implementation details.
+   
+   - Domain encoding
+   We encode each attribute into an integer, for example, if the
+   attribute has three possible values 'Some', 'None', 'Full', we
+   map them to 1, 2, 3 respectively. Such domain mapping makes
+   learning more efficient. It makes the intermediate
+   representation more compact: we store an integer value at each node
+   instead of a possibly long string. The comparison at each
+   node is done on integers, which is also than string
+   comparison.
+   
+   The literal values of each domain are used only when we print out
+   the classifier tree.
+
+   The mappings between domain value and encoded value are kept in two
+   dictionaries, id2val and val2id.
+
+   - Multi-class
+   We only need to change the entrophy formula to consider the generic
+   case. The rest of the algorithm is the same.
+   
+   - Code generation
+   There are two alternative ways to represent the decision tree. One
+   way is to store the decision tree model learned into a model file
+   and reload it back when we use the model to classify new data. This
+   can be trivially done in Python with the pickle object.
+
+   Instead, I represent the decision tree in the code itself. These
+   two methods are essentially the same, because in Von Neumann
+   architecture, program is the same as data.
+
+   The code generation is implemented as a Syntax-driven translation
+   schema. We view the decision tree as a parsing tree. When we are
+   traversing the decision tree, at each node, we apply a syntax-driven
+   rule to translate that node into some code.
+
+   
+   
+   
+   
+

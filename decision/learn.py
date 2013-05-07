@@ -6,8 +6,6 @@ from math import log
 val2id = [] # maps value to id
 id2val = [] # maps id to value
 
-outfile="classify.py"
-    
 class DecisionTree:
     def __init__(self, pivot):
         self.pivot = pivot
@@ -41,8 +39,8 @@ def isleaf(tree):
     return not isinstance(tree, DecisionTree)
 
 class Codegen:
-    def __init__(self, output=sys.stdout):
-        self.f = output
+    def __init__(self, outfile):
+        self.outfile = outfile
         self.indent = 0
     
     def fill(self, text=''):
@@ -67,8 +65,8 @@ class Codegen:
         self.enter()
         self.fill("if len(sys.argv) != 2:")
         self.enter()
-        self.fill("print 'Usage: python classify.py [testfile]'")
-        self.fill("sys.exit()")
+        self.fill("print 'Usage: python " + self.outfile + " testfile'")
+        self.fill("sys.exit(1)")
         self.leave() # leave if
         self.fill("testfile=sys.argv[1]")
         self.fill('lines = open(testfile).readlines()')
@@ -112,9 +110,11 @@ class Codegen:
     # the essence is to encode the tree model
     # into your code, instead of the other way around
     def gencode(self, tree):
+        self.f = open(self.outfile, 'w')
         self.gen_header()
         self.gen_func(tree)
         self.gen_main()
+        self.f.close()
 
 def majority(examples):
     # generic majority
@@ -252,39 +252,23 @@ def classify(tree, record):
     assert result == record[-1]
     return result
 
-def main(args):
-    datafile = args[0]
-    testfile = args[1]
-    output = args[2]
-    examples = read_data(datafile)
+
+if __name__=='__main__':
+    if len(sys.argv) < 3:
+        print "Usage: python learn.py training_data output_file"
+        sys.exit(1)
+
+    training = sys.argv[1]
+    outfile = sys.argv[2]
+
+    examples = read_data(training)
 
     attributes = list(range(len(id2val)-1))
     tree = decision_tree_learning(examples, attributes, None)
-    print "Decision tree:"
-    print tree
-    
-    testdata = open(testfile).readlines()
-    for line in testdata:
-        test = [field.strip() for field in line.split(',')]
-        print test
-        result = classify(tree, test)
-        print "result:", result
 
-    codegen = Codegen(output)
+    print tree
+
+    codegen = Codegen(outfile)
     codegen.gencode(tree)
 
-if __name__=='__main__':
-    training = 'restaurant.csv'
-    testing = 'test.csv'
-    output = sys.stdout
-
-    if len(sys.argv) > 1:
-        training = sys.argv[1]
-    if len(sys.argv) > 2:
-        testing = sys.argv[2]
-    if len(sys.argv) > 3:
-        outfile = sys.argv[3]
-        output = open(sys.argv[3], 'w')
-
-    main([training, testing, output])
-    output.close()
+    print "Classifier generated in: ", outfile
